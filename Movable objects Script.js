@@ -77,14 +77,14 @@ function updatePlayerPosition() {
         margin: 0 10% !important;
         position: relative !important;
         border: 1px solid red !important;
-        cursor: move !important;
+        cursor: grab !important;
         backdrop-filter: brightness(0.6) !important;
     }       
 	 
     #center.ytd-masthead {
         flex: 0 0 550px !important;
         margin: auto !important;
-       cursor: move !important;
+       cursor: grab !important;
 	}
 
     #container.ytd-searchbox {
@@ -95,7 +95,7 @@ function updatePlayerPosition() {
         backdrop-filter: brightness(0.6) !important;
         position: abos !important;
         display: flex !important;
-       cursor: move !important;
+       cursor: grab !important;
         justify-content: space-around !important;
     }
 		
@@ -106,7 +106,7 @@ function updatePlayerPosition() {
         position: relative !important;
         margin: 0 10% !important;
         border: 1px solid red !important;
-        cursor: move !important;
+        cursor: grab !important;
         backdrop-filter: brightness(0.6) !important;
    }
 
