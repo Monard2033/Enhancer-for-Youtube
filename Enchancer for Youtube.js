@@ -26,9 +26,9 @@ function updatePlayerPosition() {
       maxWidthValue = 1850;
       primaryElement.style.maxWidth = 'none';
       if (window.pageYOffset >= 3200) {
-        position = viewportWidth * 0.7 - 15;
+        position = viewportWidth * 0.72 - 20;
       } else {
-        position = viewportWidth * 0.45 -30;
+        position = viewportWidth * 0.45 - 30;
       }
     } else {
       console.log('Default resolution');
@@ -40,131 +40,135 @@ function updatePlayerPosition() {
 
   var cssRules = `
     #start.ytd-masthead {
-        height: 50px;
-        border-radius: 30px !important;
-        display: flex !important;
-        position: static !important;
-        margin: 0 10% !important;
-        border: 1px solid red !important;
-        backdrop-filter: brightness(0.6) !important;
-    }       
-	 
+      height: 50px;
+      border-radius: 30px !important;
+      display: flex !important;
+      position: static !important;
+      margin: 0 10% !important;
+      border: 1px solid red !important;
+      backdrop-filter: brightness(0.6) !important;
+    }
+
     #center.ytd-masthead {
-        flex: 0 0 550px !important;
-        margin: auto !important;
-	}
+      flex: 0 0 550px !important;
+      margin: auto !important;
+    }
 
     #container.ytd-searchbox {
-        margin-left: 0 !important;
-        border: 1px solid red !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        backdrop-filter: brightness(0.6) !important;
-        display: flex !important;
-        justify-content: space-around !important;
+      margin-left: 0 !important;
+      border: 1px solid red !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      backdrop-filter: brightness(0.6) !important;
+      display: flex !important;
+      justify-content: space-around !important;
     }
 		
     #end.ytd-masthead {
-        height: 50px !important;
-        min-width: 10px !important;
-        border-radius: 30px !important;
-        position: relative !important;
-        margin: 0 10% !important;
-        border: 1px solid red !important;
-        backdrop-filter: brightness(0.6) !important;
-   }
+      height: 50px !important;
+      min-width: 10px !important;
+      border-radius: 30px !important;
+      position: relative !important;
+      margin: 0 10% !important;
+      border: 1px solid red !important;
+      backdrop-filter: brightness(0.6) !important;
+    }
 
     #columns.ytd-watch-flexy {
-        margin: 50px !important;
-        margin-top: 0 !important;
+      margin: 50px !important;
+      margin-top: 0 !important;
     }
     
     ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
-        min-width: 450px !important;
+      min-width: 450px !important;
     }
-	#search-icon-legacy.ytd-searchbox {
-        background: transparent !important;
-        border: 1px solid red !important;
-        backdrop-filter: brightness(0.6) !important;
-        height: 50px !important;
-	}
+
+    #search-icon-legacy.ytd-searchbox {
+      background: transparent !important;
+      border: 1px solid red !important;
+      backdrop-filter: brightness(0.6) !important;
+      height: 50px !important;
+    }
     
     .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
-        backdrop-filter: brightness(0.6) !important;
-        color: white !important;
-	}
-
-	#background.ytd-masthead {
-        position: fixed !important;
-        opacity: 0 !important;
-        visibility: visible !important;
-        --light-theme-text-color: invert !important;
+      backdrop-filter: brightness(0.6) !important;
+      color: white !important;
+    }
+    
+    #background.ytd-masthead {
+      position: fixed !important;
+      opacity: 0 !important;
+      visibility: visible !important;
+      --light-theme-text-color: invert !important;
     }
     
     #search-form.ytd-searchbox {
-        height: 50px !important;
+      height: 50px !important;
     }
     
     ytd-searchbox.ytd-masthead {
-        margin: 0 !important;
-        padding: 0 10px !important;
+      margin: 0 !important;
+      padding: 0 10px !important;
     }
     
     #sections.ytd-guide-renderer {
-        position: relative !important;
+      position: relative !important;
     }
     
     #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child{
-        padding: 0px !important;
+      padding: 0px !important;
     }
     
     #voice-search-button.ytd-masthead {
-        margin-left:0 !important;
-        border: 1px solid red !important;
-        background: transparent !important;
-        backdrop-filter: brightness(0.6) !important;
+      margin-left:0 !important;
+      border: 1px solid red !important;
+      background: transparent !important;
+      backdrop-filter: brightness(0.6) !important;
     }
     
     #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
-        display: none !important;
+      display: none !important;
     }
     
     .yt-spec-touch-feedback-shape__fill {
-        background-color: black !important;
+      background-color: black !important;
     }
     
     .yt-spec-icon-shape {
-        color: #c00 !important;
+      color: #c00 !important;
     }
     
     ytd-feed-filter-chip-bar-renderer {
-        height: 0 !important;
+      height: 0 !important;
     }
 
     body.efyt-mini-player._top-right #movie_player:not(.ytp-fullscreen) {
       height: 315px !important;
-      border-radius: 15px !important;
+      border-radius: 14px !important;
       width: 560px !important;
       top: 55px !important;
       left: ${position}px !important;
       z-index: 100 !important;
-   }
+    }
+
     body._top-right._560x315 #efyt-progress {
-      top: 361.5px !important;
-      border-bottom-right-radius: 300px;
-      border-bottom-left-radius: 300px;
+      top: 361px !important;
+      border-bottom-right-radius: 560px;
+      border-bottom-left-radius: 560px;
       left: ${position}px !important;
       height: 8px !important;
-      max-width: 555px !important;
-      margin-left: 2px !important;
+      max-width: 554px !important;
+      margin-left: 2.5px !important;
       z-index: 200 !important;
     }
+
     #efyt-progress::-webkit-progress-bar,
     #efyt-progress::-webkit-progress-value {
-     border-bottom-right-radius: 300px;
-     border-bottom-left-radius: 300px;
-     
+      border-bottom-left-radius: 560px;
+      border-bottom-right-radius: 250px;
+      border-top-right-radius: 250px;
     }
+    
     body._top-right #efyt-close-mini-player {
      top: 60px !important;
      left: ${position}px !important;
