@@ -15,16 +15,16 @@ function updatePlayerPosition() {
   if (columnsElement && primaryElement) {
     var maxWidthValue;
     if (window.screen.width == 2560 && window.screen.height == 1440) {
-      maxWidthValue = 2300;
-      primaryElement.style.minWidth = 'none';
+           maxWidthValue = 2300;
+          primaryElement.style.minWidth = 'none';
       if (window.pageYOffset >= 4200) {
         position = viewportWidth * 0.75 + 20;
       } else {
-        position = viewportWidth * 0.52;
+        position = viewportWidth * 0.55 - 30;
       }
     } else if (window.screen.width == 1920 && window.screen.height == 1080) {
-      maxWidthValue = 1850;
-      primaryElement.style.maxWidth = 'none';
+           maxWidthValue = 1850;
+           primaryElement.style.maxWidth = 'none';
       if (window.pageYOffset >= 3200) {
         position = viewportWidth * 0.72 - 20;
       } else {
