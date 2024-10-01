@@ -75,7 +75,6 @@ function updatePlayerPosition() {
     }
 
     #columns.ytd-watch-flexy {
-      margin: 50px !important;
       margin-top: 0 !important;
     }
     
@@ -165,8 +164,7 @@ function updatePlayerPosition() {
     #efyt-progress::-webkit-progress-bar,
     #efyt-progress::-webkit-progress-value {
       border-bottom-left-radius: 560px;
-      border-bottom-right-radius: 250px;
-      border-top-right-radius: 250px;
+      border-bottom-right-radius: 560px;
     }
     
     body._top-right #efyt-close-mini-player {
