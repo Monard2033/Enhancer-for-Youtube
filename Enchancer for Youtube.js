@@ -16,7 +16,7 @@ function updatePlayerPosition() {
     var maxWidthValue;
     if (window.screen.width == 2560 && window.screen.height == 1440) {
            maxWidthValue = 2300;
-          primaryElement.style.minWidth = 'none';
+          primaryElement.style.maxWidth = 'none';
       if (window.pageYOffset >= 4200) {
         position = viewportWidth * 0.75 + 20;
       } else {
