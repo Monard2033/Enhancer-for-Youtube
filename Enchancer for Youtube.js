@@ -15,16 +15,16 @@ function updatePlayerPosition() {
   if (columnsElement && primaryElement) {
     var maxWidthValue;
     if (window.screen.width == 2560 && window.screen.height == 1440) {
-           maxWidthValue = 2300;
-          primaryElement.style.maxWidth = 'none';
+      maxWidthValue = 2300;
+      primaryElement.style.minWidth = 'none';
       if (window.pageYOffset >= 4200) {
         position = viewportWidth * 0.75 + 20;
       } else {
         position = viewportWidth * 0.55 - 30;
       }
     } else if (window.screen.width == 1920 && window.screen.height == 1080) {
-           maxWidthValue = 1850;
-           primaryElement.style.maxWidth = 'none';
+      maxWidthValue = 1850;
+      primaryElement.style.maxWidth = 'none';
       if (window.pageYOffset >= 3200) {
         position = viewportWidth * 0.72 - 20;
       } else {
@@ -47,6 +47,23 @@ function updatePlayerPosition() {
       margin: 0 10% !important;
       border: 1px solid red !important;
       backdrop-filter: brightness(0.6) !important;
+    }
+    
+    .YtSearchboxComponentHost {
+      height: 53px !important;
+      margin: 0 12px 0 0 !important;
+    }
+    
+    .YtSearchboxComponentInputBox  {
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+      border: 1px solid red !important;
+      box-shadow: none !important;
+      height: 50px;
+      background: transparent !important;
+      backdrop-filter: brightness(0.6) !important;
+      display: flex !important;
+      justify-content: space-around !important;
     }
 
     #center.ytd-masthead {
@@ -82,11 +99,11 @@ function updatePlayerPosition() {
       min-width: 450px !important;
     }
 
-    #search-icon-legacy.ytd-searchbox {
+    .YtSearchboxComponentSearchButton {
       background: transparent !important;
       border: 1px solid red !important;
       backdrop-filter: brightness(0.6) !important;
-      height: 50px !important;
+      height: 52px !important;
     }
     
     .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
@@ -195,6 +212,7 @@ function toggleScrollToTopButton() {
 const scrollToTopBtn = document.createElement('button');
 scrollToTopBtn.id = 'scroll-to-top';
 scrollToTopBtn.classList.add('scroll-top-btn');
+scrollToTopBtn.setAttribute('aria-label', 'Scroll to Top');
 
 const svgElement = document.createElementNS(
   'http://www.w3.org/2000/svg',
