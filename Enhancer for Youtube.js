@@ -15,21 +15,17 @@ function updatePlayerPosition() {
   if (columnsElement && primaryElement) {
     var maxWidthValue;
     if (window.screen.width == 2560 && window.screen.height == 1440) {
-      maxWidthValue = 2300;
-      primaryElement.style.minWidth = 'none';
+           maxWidthValue = 2300;
+          primaryElement.style.minWidth = 'none';
       if (window.pageYOffset >= 4200) {
         position = viewportWidth * 0.75 + 20;
       } else {
         position = viewportWidth * 0.55 - 30;
       }
     } else if (window.screen.width == 1920 && window.screen.height == 1080) {
-      maxWidthValue = 1850;
-      primaryElement.style.maxWidth = 'none';
-      if (window.pageYOffset >= 3200) {
-        position = viewportWidth * 0.72 - 20;
-      } else {
-        position = viewportWidth * 0.45 - 30;
-      }
+           maxWidthValue = 1850;
+           primaryElement.style.maxWidth = 'none';
+           position = viewportWidth * 0.45 - 30;
     } else {
       console.log('Default resolution');
       maxWidthValue = 1850;
@@ -40,7 +36,7 @@ function updatePlayerPosition() {
 
   var cssRules = `
     #start.ytd-masthead {
-      height: 50px;
+      height: 50px !important;
       border-radius: 30px !important;
       display: flex !important;
       position: static !important;
@@ -49,17 +45,17 @@ function updatePlayerPosition() {
       backdrop-filter: brightness(0.6) !important;
     }
     
-    .YtSearchboxComponentHost {
+    .ytSearchboxComponentHost {
       height: 53px !important;
       margin: 0 12px 0 0 !important;
     }
     
-    .YtSearchboxComponentInputBox  {
+    .ytSearchboxComponentInputBox  {
       margin-left: 0 !important;
       margin-top: 0 !important;
       border: 1px solid red !important;
       box-shadow: none !important;
-      height: 50px;
+      height: 50px !important;
       background: transparent !important;
       backdrop-filter: brightness(0.6) !important;
       display: flex !important;
@@ -99,7 +95,7 @@ function updatePlayerPosition() {
       min-width: 450px !important;
     }
 
-    .YtSearchboxComponentSearchButton {
+    .ytSearchboxComponentSearchButton {
       background: transparent !important;
       border: 1px solid red !important;
       backdrop-filter: brightness(0.6) !important;
@@ -158,7 +154,7 @@ function updatePlayerPosition() {
       height: 0 !important;
     }
 
-    body.efyt-mini-player._top-right #movie_player:not(.ytp-fullscreen) {
+   body.efyt-mini-player.efyt-mini-player-top-right #movie_player:not(.ytp-fullscreen) {
       height: 315px !important;
       border-radius: 14px !important;
       width: 560px !important;
@@ -168,20 +164,26 @@ function updatePlayerPosition() {
     }
 
     body._top-right._560x315 #efyt-progress {
-      top: 361px !important;
-      border-bottom-right-radius: 560px;
-      border-bottom-left-radius: 560px;
+      top: 360px !important;
+      border-bottom-right-radius: 860px;
+      border-bottom-left-radius: 860px;
       left: ${position}px !important;
-      height: 8px !important;
-      max-width: 554px !important;
-      margin-left: 2.5px !important;
+      height: 10px !important;
+      max-width: 560px !important;
+      margin-left: 1.5px !important;
       z-index: 200 !important;
+      overflow: hidden !important;
     }
 
-    #efyt-progress::-webkit-progress-bar,
-    #efyt-progress::-webkit-progress-value {
-      border-bottom-left-radius: 560px;
-      border-bottom-right-radius: 560px;
+    #efyt-progress::-webkit-progress-bar {
+      max-width: 560px !important;
+      overflow: hidden !important;
+      border-bottom-left-radius: 860px;
+      border-bottom-right-radius: 860px;
+    }
+     #efyt-progress::-webkit-progress-value {
+      border-top-right-radius: 860px;
+      border-bottom-right-radius: 860px;
     }
     
     body._top-right #efyt-close-mini-player {
