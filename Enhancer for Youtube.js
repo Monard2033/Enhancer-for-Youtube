@@ -212,21 +212,15 @@ function monitorProgressBar() {
       const widthStyle = progressBar.style.width;
       const width = parseFloat(widthStyle.replace('%', ' '));
 
-      if (width >= 98) {
+      if (width >= 99.8) {
         const navigationButton = document.querySelector(buttonSelector);
 
         if (navigationButton) {
           navigationButton.click(); // Simulate a click on the button
-          console.log(
-            'Navigation button clicked because progress bar reached 97%.'
-          );
-        } else {
-          console.error('Navigation button not found.');
-        }
-        clearInterval(interval);
-        console.log('Page scrolled because progress bar reached 97%.');
+         clearInterval(interval);
       }
     }
+   }
   }, 100); // Check every 100ms
 }
 
