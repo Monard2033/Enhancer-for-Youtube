@@ -198,6 +198,42 @@ function updatePlayerPosition() {
 
 updatePlayerPosition();
 
+function monitorProgressBar() {
+  // Poll for the element
+  const interval = setInterval(() => {
+    const progressBar = document.querySelector(
+      '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div > div > yt-progress-bar-line > div > div.ytProgressBarLineProgressBarPlayed.ytProgressBarLineProgressBarPlayedRefresh'
+    );
+    const buttonSelector =
+      '#navigation-button-down > ytd-button-renderer > yt-button-shape > button > yt-touch-feedback-shape > div > div.yt-spec-touch-feedback-shape__fill';
+
+    if (progressBar) {
+      // Get the width from the inline style
+      const widthStyle = progressBar.style.width;
+      const width = parseFloat(widthStyle.replace('%', ' '));
+
+      if (width >= 98) {
+        const navigationButton = document.querySelector(buttonSelector);
+
+        if (navigationButton) {
+          navigationButton.click(); // Simulate a click on the button
+          console.log(
+            'Navigation button clicked because progress bar reached 97%.'
+          );
+        } else {
+          console.error('Navigation button not found.');
+        }
+        clearInterval(interval);
+        console.log('Page scrolled because progress bar reached 97%.');
+      }
+    }
+  }, 100); // Check every 100ms
+}
+
+// Start monitoring the progress bar
+monitorProgressBar();
+
+
 window.addEventListener('scroll', updatePlayerPosition);
 window.addEventListener('resize', updatePlayerPosition);
 document.head.appendChild(styleElement);
@@ -314,4 +350,5 @@ document.getElementById('scroll-to-top').addEventListener('click', function () {
 });
 
 document.addEventListener('DOMContentLoaded', toggleScrollToTopButton);
+
 window.addEventListener('popstate', toggleScrollToTopButton);
