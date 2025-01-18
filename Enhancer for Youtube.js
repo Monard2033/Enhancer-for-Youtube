@@ -211,7 +211,7 @@ function adjustDynamicStyles() {
     } else if (windowWidth >= 1920) {
       mastheadWidth = 100; // Maximum width for masthead
     } else {
-      mastheadWidth = ((windowWidth - 658) / (1920 - 658)) * 100; // Interpolated width
+      mastheadWidth = ((windowWidth - 500) / (1920 - 650)) * 100;
     }
     masthead.style.width = `${mastheadWidth}%`;
 
