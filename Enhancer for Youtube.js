@@ -63,7 +63,6 @@ function updatePlayerPosition() {
     }
 
     #center.ytd-masthead {
-      flex: 0 0 550px !important;
       margin: auto !important;
     }
 
@@ -76,7 +75,7 @@ function updatePlayerPosition() {
       display: flex !important;
       justify-content: space-around !important;
     }
-		
+
     #end.ytd-masthead {
       height: 50px !important;
       min-width: 10px !important;
@@ -198,6 +197,45 @@ function updatePlayerPosition() {
 
 updatePlayerPosition();
 
+function adjustDynamicStyles() {
+  const masthead = document.querySelector("#masthead-container.ytd-app");
+  const center = document.querySelector("#center.ytd-masthead");
+
+  if (masthead && center) {
+    const windowWidth = window.innerWidth;
+
+    // Calculate masthead width
+    let mastheadWidth = 0;
+    if (windowWidth <= 658) {
+      mastheadWidth = 0; // Minimum width for masthead
+    } else if (windowWidth >= 1920) {
+      mastheadWidth = 100; // Maximum width for masthead
+    } else {
+      mastheadWidth = ((windowWidth - 658) / (1920 - 658)) * 100; // Interpolated width
+    }
+    masthead.style.width = `${mastheadWidth}%`;
+
+    // Calculate center flex-basis
+    let centerFlexBasis = 0;
+    if (windowWidth <= 658) {
+      centerFlexBasis = 200; // Minimum flex-basis for center
+    } else if (windowWidth >= 1920) {
+      centerFlexBasis = 550; // Maximum flex-basis for center
+    } else {
+      centerFlexBasis = 200 + ((windowWidth - 658) / (1920 - 658)) * (550 - 200); // Interpolated flex-basis
+    }
+    center.style.flex = `0 0 ${centerFlexBasis}px`; // Apply calculated flex-basis
+  }
+}
+
+// Attach resize event to update dynamically
+window.addEventListener("resize", adjustDynamicStyles);
+
+// Initial setup
+document.addEventListener("DOMContentLoaded", adjustDynamicStyles);
+
+
+
 function monitorProgressBar() {
   // Poll for the element
   const interval = setInterval(() => {
@@ -205,20 +243,22 @@ function monitorProgressBar() {
       '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div > div > yt-progress-bar-line > div > div.ytProgressBarLineProgressBarPlayed.ytProgressBarLineProgressBarPlayedRefresh'
     );
     const buttonSelector =
-      '#navigation-button-down > ytd-button-renderer > yt-button-shape > button > yt-touch-feedback-shape > div > div.yt-spec-touch-feedback-shape__fill';
+      '#navigation-button-down';
 
     if (progressBar) {
       // Get the width from the inline style
       const widthStyle = progressBar.style.width;
       const width = parseFloat(widthStyle.replace('%', ' '));
-
-      if (width >= 99.8) {
+     
+      if (width >= 99) {
         const navigationButton = document.querySelector(buttonSelector);
-
-        if (navigationButton) {
-          navigationButton.click(); // Simulate a click on the button
-         clearInterval(interval);
-      }
+         console.log("ProgressBar Found");
+                if (navigationButton) {
+                    navigationButton.click(); // Simulate a click on the button
+                    console.log("Navigation button clicked because progress bar reached 97%.");
+                } else {
+                    console.error("Navigation button not found.");
+                }
     }
    }
   }, 100); // Check every 100ms
@@ -344,5 +384,5 @@ document.getElementById('scroll-to-top').addEventListener('click', function () {
 });
 
 document.addEventListener('DOMContentLoaded', toggleScrollToTopButton);
-
+document.addEventListener('DOMContentLoaded', monitorProgressBar);
 window.addEventListener('popstate', toggleScrollToTopButton);
