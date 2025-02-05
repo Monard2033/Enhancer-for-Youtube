@@ -211,7 +211,7 @@ function adjustDynamicStyles() {
     } else if (windowWidth >= 1920) {
       mastheadWidth = 100; // Maximum width for masthead
     } else {
-      mastheadWidth = ((windowWidth - 500) / (1920 - 650)) * 100;
+      mastheadWidth = ((windowWidth - 658) / (1920 - 658)) * 100; // Interpolated width
     }
     masthead.style.width = `${mastheadWidth}%`;
 
@@ -243,7 +243,7 @@ function monitorProgressBar() {
       '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div > div > yt-progress-bar-line > div > div.ytProgressBarLineProgressBarPlayed.ytProgressBarLineProgressBarPlayedRefresh'
     );
     const buttonSelector =
-      '#navigation-button-down';
+      '#navigation-button-down > ytd-button-renderer > yt-button-shape > button';
 
     if (progressBar) {
       // Get the width from the inline style
@@ -255,7 +255,7 @@ function monitorProgressBar() {
          console.log("ProgressBar Found");
                 if (navigationButton) {
                     navigationButton.click(); // Simulate a click on the button
-                    console.log("Navigation button clicked because progress bar reached 97%.");
+                    console.log("Navigation button clicked because progress bar reached 99%.");
                 } else {
                     console.error("Navigation button not found.");
                 }
