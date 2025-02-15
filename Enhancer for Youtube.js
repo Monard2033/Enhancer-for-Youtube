@@ -16,7 +16,7 @@ function updatePlayerPosition() {
     var maxWidthValue;
     if (window.screen.width == 2560 && window.screen.height == 1440) {
            maxWidthValue = 2300;
-          primaryElement.style.minWidth = 'none';
+          primaryElement.style.maxWidth = 'none';
       if (window.pageYOffset >= 4200) {
         position = viewportWidth * 0.75 + 20;
       } else {
@@ -222,7 +222,7 @@ function adjustDynamicStyles() {
     } else if (windowWidth >= 1920) {
       centerFlexBasis = 550; // Maximum flex-basis for center
     } else {
-      centerFlexBasis = 200 + ((windowWidth - 658) / (1920 - 658)) * (550 - 200); // Interpolated flex-basis
+      centerFlexBasis = 200 + ((windowWidth - 658) / (1770 - 658)) * (550 - 200); // Interpolated flex-basis
     }
     center.style.flex = `0 0 ${centerFlexBasis}px`; // Apply calculated flex-basis
   }
@@ -230,7 +230,7 @@ function adjustDynamicStyles() {
 
 // Attach resize event to update dynamically
 window.addEventListener("resize", adjustDynamicStyles);
-
+window.addEventListener("resize", updatePlayerPosition);
 // Initial setup
 document.addEventListener("DOMContentLoaded", adjustDynamicStyles);
 
@@ -240,7 +240,7 @@ function monitorProgressBar() {
   // Poll for the element
   const interval = setInterval(() => {
     const progressBar = document.querySelector(
-      '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div > div > yt-progress-bar-line > div > div.ytProgressBarLineProgressBarPlayed.ytProgressBarLineProgressBarPlayedRefresh'
+      '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div > div > yt-progress-bar-line > div > div.ytProgressBarLineProgressBarPlayed'
     );
     const buttonSelector =
       '#navigation-button-down > ytd-button-renderer > yt-button-shape > button';
