@@ -14,23 +14,21 @@ function updatePlayerPosition() {
 
   if (columnsElement && primaryElement) {
     var maxWidthValue;
-    if (window.screen.width == 2560 && window.screen.height == 1440) {
-           maxWidthValue = 2300;
-          primaryElement.style.maxWidth = 'none';
+    if (window.screen.width === 2560 && window.screen.height === 1440) {
+      maxWidthValue = 2300;
       if (window.pageYOffset >= 4200) {
         position = viewportWidth * 0.75 + 20;
       } else {
         position = viewportWidth * 0.55 - 30;
       }
-    } else if (window.screen.width == 1920 && window.screen.height == 1080) {
-           maxWidthValue = 1850;
-           primaryElement.style.maxWidth = 'none';
-           position = viewportWidth * 0.45 - 30;
+    } else if (window.screen.width === 1920 && window.screen.height === 1080) {
+      maxWidthValue = 1850;
+      position = viewportWidth * 0.45 - 30;
     } else {
       console.log('Default resolution');
       maxWidthValue = 1850;
     }
-
+    primaryElement.style.maxWidth = maxWidthValue + 'px';
     columnsElement.style.maxWidth = maxWidthValue + 'px';
   }
 
@@ -198,8 +196,8 @@ function updatePlayerPosition() {
 updatePlayerPosition();
 
 function adjustDynamicStyles() {
-  const masthead = document.querySelector("#masthead-container.ytd-app");
-  const center = document.querySelector("#center.ytd-masthead");
+  const masthead = document.querySelector('#masthead-container.ytd-app');
+  const center = document.querySelector('#center.ytd-masthead');
 
   if (masthead && center) {
     const windowWidth = window.innerWidth;
@@ -222,19 +220,19 @@ function adjustDynamicStyles() {
     } else if (windowWidth >= 1920) {
       centerFlexBasis = 550; // Maximum flex-basis for center
     } else {
-      centerFlexBasis = 200 + ((windowWidth - 658) / (1770 - 658)) * (550 - 200); // Interpolated flex-basis
+      centerFlexBasis =
+        200 + ((windowWidth - 658) / (1770 - 658)) * (550 - 200); // Interpolated flex-basis
     }
     center.style.flex = `0 0 ${centerFlexBasis}px`; // Apply calculated flex-basis
   }
 }
 
 // Attach resize event to update dynamically
-window.addEventListener("resize", adjustDynamicStyles);
-window.addEventListener("resize", updatePlayerPosition);
+window.addEventListener('resize', adjustDynamicStyles);
+window.addEventListener('resize', updatePlayerPosition);
+window.addEventListener('scroll', updatePlayerPosition);
 // Initial setup
-document.addEventListener("DOMContentLoaded", adjustDynamicStyles);
-
-
+document.addEventListener('DOMContentLoaded', adjustDynamicStyles);
 
 function monitorProgressBar() {
   // Poll for the element
@@ -249,27 +247,23 @@ function monitorProgressBar() {
       // Get the width from the inline style
       const widthStyle = progressBar.style.width;
       const width = parseFloat(widthStyle.replace('%', ' '));
-     
+
       if (width >= 99) {
         const navigationButton = document.querySelector(buttonSelector);
-         console.log("ProgressBar Found");
-                if (navigationButton) {
-                    navigationButton.click(); // Simulate a click on the button
-                    console.log("Navigation button clicked because progress bar reached 99%.");
-                } else {
-                    console.error("Navigation button not found.");
-                }
+        console.log('ProgressBar Found');
+        if (navigationButton) {
+          navigationButton.click(); // Simulate a click on the button
+        } else {
+          console.error('Navigation button not found.');
+        }
+      }
     }
-   }
   }, 100); // Check every 100ms
 }
 
 // Start monitoring the progress bar
 monitorProgressBar();
 
-
-window.addEventListener('scroll', updatePlayerPosition);
-window.addEventListener('resize', updatePlayerPosition);
 document.head.appendChild(styleElement);
 
 function checkIfWatchPage() {
