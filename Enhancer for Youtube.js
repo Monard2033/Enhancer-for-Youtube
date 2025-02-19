@@ -206,10 +206,10 @@ function adjustDynamicStyles() {
     let mastheadWidth = 0;
     if (windowWidth <= 658) {
       mastheadWidth = 0; // Minimum width for masthead
-    } else if (windowWidth >= 1920) {
+    } else if (windowWidth >= 1750) {
       mastheadWidth = 100; // Maximum width for masthead
     } else {
-      mastheadWidth = ((windowWidth - 658) / (1920 - 658)) * 100; // Interpolated width
+      mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100; // Interpolated width
     }
     masthead.style.width = `${mastheadWidth}%`;
 
@@ -217,11 +217,11 @@ function adjustDynamicStyles() {
     let centerFlexBasis = 0;
     if (windowWidth <= 658) {
       centerFlexBasis = 200; // Minimum flex-basis for center
-    } else if (windowWidth >= 1920) {
+    } else if (windowWidth >= 1750) {
       centerFlexBasis = 550; // Maximum flex-basis for center
     } else {
       centerFlexBasis =
-        200 + ((windowWidth - 658) / (1770 - 658)) * (550 - 200); // Interpolated flex-basis
+        200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200); // Interpolated flex-basis
     }
     center.style.flex = `0 0 ${centerFlexBasis}px`; // Apply calculated flex-basis
   }
@@ -247,12 +247,13 @@ function monitorProgressBar() {
       // Get the width from the inline style
       const widthStyle = progressBar.style.width;
       const width = parseFloat(widthStyle.replace('%', ' '));
-
-      if (width >= 99) {
+      let clicked = 0;
+      if (width >= 99 && !clicked) {
         const navigationButton = document.querySelector(buttonSelector);
         console.log('ProgressBar Found');
         if (navigationButton) {
           navigationButton.click(); // Simulate a click on the button
+        clicked = 1;
         } else {
           console.error('Navigation button not found.');
         }
