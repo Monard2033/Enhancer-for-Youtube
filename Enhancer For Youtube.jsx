@@ -3,52 +3,51 @@ let buttonPosition;
 let position;
 var viewportWidth = window.innerWidth;
 let observer = null;
-let isClicked = false;
+let isClicked = true;
 const scrollToTopBtn = document.createElement('button');
 const svgElement = document.createElementNS(
-    'http://www.w3.org/2000/svg',
-    'svg'
+  'http://www.w3.org/2000/svg',
+  'svg'
 );
 const pathElement = document.createElementNS(
-    'http://www.w3.org/2000/svg',
-    'path'
+  'http://www.w3.org/2000/svg',
+  'path'
 );
 const divElement = document.createElement('div');
 const scrollTopBtnStyles = document.createElement('style');
 
-
 if (window.screen.width === 2560 && window.screen.height === 1440) {
-    buttonPosition = viewportWidth * 0.73;
+  buttonPosition = viewportWidth * 0.73;
 } else {
-    buttonPosition = viewportWidth * 0.7 - 30;
+  buttonPosition = viewportWidth * 0.7 - 30;
 }
 
 function updatePlayerPosition() {
-    var primaryElement = document.querySelector('#primary');
-    var columnsElement = document.querySelector('#columns');
-    var viewportWidth = window.innerWidth;
+  var primaryElement = document.querySelector('#primary');
+  var columnsElement = document.querySelector('#columns');
+  var viewportWidth = window.innerWidth;
 
-    if (columnsElement && primaryElement) {
-        var maxWidthValue;
-        if (window.screen.width === 2560 && window.screen.height === 1440) {
-            maxWidthValue = 2300;
-            if (window.pageYOffset >= 4200) {
-                position = viewportWidth * 0.75 + 20;
-            } else {
-                position = viewportWidth * 0.55 - 30;
-            }
-        } else if (window.screen.width === 1920 && window.screen.height === 1080) {
-            maxWidthValue = 1850;
-            position = viewportWidth * 0.45 - 30;
-        } else {
-            console.log('Default resolution');
-            maxWidthValue = 1850;
-        }
-        primaryElement.style.maxWidth = maxWidthValue + 'px';
-        columnsElement.style.maxWidth = maxWidthValue + 'px';
+  if (columnsElement && primaryElement) {
+    var maxWidthValue;
+    if (window.screen.width === 2560 && window.screen.height === 1440) {
+      maxWidthValue = 2300;
+      if (window.pageYOffset >= 4200) {
+        position = viewportWidth * 0.75 + 20;
+      } else {
+        position = viewportWidth * 0.55 - 30;
+      }
+    } else if (window.screen.width === 1920 && window.screen.height === 1080) {
+      maxWidthValue = 1850;
+      position = viewportWidth * 0.45 - 30;
+    } else {
+      console.log('Default resolution');
+      maxWidthValue = 1850;
     }
+    primaryElement.style.maxWidth = maxWidthValue + 'px';
+    columnsElement.style.maxWidth = maxWidthValue + 'px';
+  }
 
-    var cssRules = `
+  var cssRules = `
         #start.ytd-masthead {
             height: 50px !important;
             border-radius: 30px !important;
@@ -206,104 +205,151 @@ function updatePlayerPosition() {
             height: 3% !important;
         }
     `;
-    styleElement.textContent = cssRules;
+  styleElement.textContent = cssRules;
 }
 
 function adjustDynamicStyles() {
-    const masthead = document.querySelector('#masthead-container.ytd-app');
-    const center = document.querySelector('#center.ytd-masthead');
+  const masthead = document.querySelector('#masthead-container.ytd-app');
+  const center = document.querySelector('#center.ytd-masthead');
 
-    if (masthead && center) {
-        const windowWidth = window.innerWidth;
+  if (masthead && center) {
+    const windowWidth = window.innerWidth;
 
-        // Calculate masthead width
-        let mastheadWidth = 0;
-        if (windowWidth <= 658) {
-            mastheadWidth = 0; // Minimum width for masthead
-        } else if (windowWidth >= 1750) {
-            mastheadWidth = 100; // Maximum width for masthead
-        } else {
-            mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100; // Interpolated width
-        }
-        masthead.style.width = `${mastheadWidth}%`;
-
-        // Calculate center flex-basis
-        let centerFlexBasis = 0;
-        if (windowWidth <= 658) {
-            centerFlexBasis = 200; // Minimum flex-basis for center
-        } else if (windowWidth >= 1750) {
-            centerFlexBasis = 550; // Maximum flex-basis for center
-        } else {
-            centerFlexBasis =
-                200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200); // Interpolated flex-basis
-        }
-        center.style.flex = `0 0 ${centerFlexBasis}px`; // Apply calculated flex-basis
+    // Calculate masthead width
+    let mastheadWidth = 0;
+    if (windowWidth <= 658) {
+      mastheadWidth = 0; // Minimum width for masthead
+    } else if (windowWidth >= 1750) {
+      mastheadWidth = 100; // Maximum width for masthead
+    } else {
+      mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100; // Interpolated width
     }
+    masthead.style.width = `${mastheadWidth}%`;
+
+    // Calculate center flex-basis
+    let centerFlexBasis = 0;
+    if (windowWidth <= 658) {
+      centerFlexBasis = 200; // Minimum flex-basis for center
+    } else if (windowWidth >= 1750) {
+      centerFlexBasis = 550; // Maximum flex-basis for center
+    } else {
+      centerFlexBasis =
+        200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200); // Interpolated flex-basis
+    }
+    center.style.flex = `0 0 ${centerFlexBasis}px`; // Apply calculated flex-basis
+  }
 }
 
-function waitForDOMElement(selector, callback, interval = 100, timeout = 10000) {
+function waitForDOMElement(
+  selector,
+  callback,
+  interval = 100,
+  timeout = 10000
+) {
+  if (checkIfShortsPage()) {
     const startTime = Date.now();
     const checkElement = () => {
-        const element = document.querySelector(selector);
-        if (element) {
-            callback(element);
-        } else if (Date.now() - startTime < timeout) {
-            setTimeout(checkElement, interval);
-        } else {
-            console.error(`Element with selector "${selector}" not found within ${timeout}ms.`);
-        }
+      const element = document.querySelector(selector);
+      if (element) {
+        callback(element);
+      } else if (Date.now() - startTime < timeout) {
+        setTimeout(checkElement, interval);
+      } else {
+        console.error(
+          `Element with selector "${selector}" not found within ${timeout}ms.`
+        );
+      }
     };
     checkElement();
+  }
 }
-
 
 function setupObserverForShort() {
+  if (checkIfShortsPage() && isClicked) {
+    console.log('YT Shorts Found, Script is working');
     isClicked = false;
-    waitForDOMElement("#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div", progressBarElement => {
-        waitForDOMElement("#navigation-button-down > ytd-button-renderer > yt-button-shape > button", navigationButtonDown => {
+    waitForDOMElement(
+      '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
+      progressBarElement => {
+        waitForDOMElement(
+          '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
+          navigationButtonDown => {
             if (observer) {
-                observer.disconnect();
+              observer.disconnect();
             }
+
             observer = new MutationObserver(mutations => {
-                mutations.forEach(mutation => {
-                    if (mutation.attributeName === 'aria-valuetext') {
-                        let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
-                        let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                        if (widthNumber >= 99 && !isClicked) {
-                            navigationButtonDown.click();
-                            isClicked = true;
-                            setTimeout(setupObserverForShort, 1000);
-                        }
-                    }
-                });
+              mutations.forEach(mutation => {
+                if (mutation.attributeName === 'aria-valuetext') {
+                  let ariaValueText =
+                    progressBarElement.getAttribute('aria-valuetext');
+                  let widthNumber = parseFloat(ariaValueText.replace('%', ''));
+                  console.log('PB: ', widthNumber);
+
+                  if (widthNumber >= 98 && !isClicked) {
+                    navigationButtonDown.click();
+                    isClicked = true;
+                    setTimeout(setupObserverForShort, 1000);
+                  }
+                }
+              });
             });
             observer.observe(progressBarElement, {
-                attributes: true,
-                attributeFilter: ['aria-valuetext']
+              attributes: true,
+              attributeFilter: ['aria-valuetext'],
             });
-         navigationButtonDown.addEventListener('click', function observerReinitHandler() {
-        setTimeout(setupObserverForShort, 1000); 
-        navigationButtonDown.removeEventListener('click', observerReinitHandler); 
-      });
-        }, 100, 10000);
-    }, 100, 10000);
-}
 
+            navigationButtonDown.addEventListener(
+              'click',
+              function observerReinitHandler() {
+                navigationButtonDown.removeEventListener(
+                  'click',
+                  observerReinitHandler
+                );
+                isClicked = true;
+                setTimeout(setupObserverForShort, 1000);
+              }
+            );
+          },
+          100, // Polling interval
+          10000 // Timeout
+        );
+      },
+      100, // Polling interval
+      10000 // Timeout
+    );
+  }
+}
+document.addEventListener('wheel', function (event) {
+  if (event.deltaY > 0) {
+    console.log('Mouse wheel scrolled down');
+    isClicked = true;
+    setTimeout(setupObserverForShort, 1000);
+  }
+});
+
+document.addEventListener('keydown', function (event) {
+  if (event.keyCode === 38 || event.keyCode === 40) {
+    isClicked = true;
+    setTimeout(setupObserverForShort, 1000);
+  }
+});
 
 function checkIfWatchPage() {
-    return window.location.href.includes('youtube.com/watch');
+  return window.location.href.includes('youtube.com/watch');
+}
+function checkIfShortsPage() {
+  return window.location.href.includes('youtube.com/shorts');
 }
 
 function toggleScrollToTopButton() {
-    const scrollToTopBtn = document.getElementById('scroll-to-top');
-    scrollToTopBtn.style.opacity = checkIfWatchPage() ? '1' : '0';
+  const scrollToTopBtn = document.getElementById('scroll-to-top');
+  scrollToTopBtn.style.opacity = checkIfWatchPage() ? '1' : '0';
 }
-
 
 scrollToTopBtn.id = 'scroll-to-top';
 scrollToTopBtn.classList.add('scroll-top-btn');
 scrollToTopBtn.setAttribute('aria-label', 'Scroll to Top');
-
 
 svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 svgElement.setAttribute('height', '24');
@@ -313,20 +359,17 @@ svgElement.setAttribute('focusable', 'false');
 svgElement.style.fill = 'red';
 svgElement.style.display = 'flex';
 
-
 pathElement.setAttribute(
-    'd',
-    'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z'
+  'd',
+  'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z'
 );
 
 svgElement.appendChild(pathElement);
-
 
 divElement.classList.add('scroll-up-btn');
 divElement.appendChild(svgElement);
 
 scrollToTopBtn.appendChild(divElement);
-
 
 scrollTopBtnStyles.textContent = `
     :root {
@@ -378,28 +421,27 @@ document.body.appendChild(scrollToTopBtn);
 updatePlayerPosition();
 setupObserverForShort();
 
-
 window.addEventListener('resize', adjustDynamicStyles);
 window.addEventListener('resize', updatePlayerPosition);
 window.addEventListener('scroll', updatePlayerPosition);
 window.addEventListener('scroll', () => {
-    const scrollPosition =
-        window.pageYOffset || document.documentElement.scrollTop;
-    const scrollToTopBtn = document.getElementById('scroll-to-top');
+  const scrollPosition =
+    window.pageYOffset || document.documentElement.scrollTop;
+  const scrollToTopBtn = document.getElementById('scroll-to-top');
 
-    if (scrollPosition > 1000 && checkIfWatchPage()) {
-        scrollToTopBtn.classList.add('show');
-        scrollToTopBtn.style.opacity = 1;
-    } else {
-        scrollToTopBtn.classList.remove('show');
-        scrollToTopBtn.style.opacity = 0;
-    }
+  if (scrollPosition > 1000 && checkIfWatchPage()) {
+    scrollToTopBtn.classList.add('show');
+    scrollToTopBtn.style.opacity = 1;
+  } else {
+    scrollToTopBtn.classList.remove('show');
+    scrollToTopBtn.style.opacity = 0;
+  }
 });
 document.getElementById('scroll-to-top').addEventListener('click', function () {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-    });
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
 });
 document.addEventListener('DOMContentLoaded', adjustDynamicStyles);
 document.addEventListener('DOMContentLoaded', toggleScrollToTopButton);
