@@ -284,10 +284,9 @@ function setupObserverForShort() {
                   let ariaValueText =
                     progressBarElement.getAttribute('aria-valuetext');
                   let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                  console.log('PB: ', widthNumber);
-
-                  if (widthNumber >= 98 && !isClicked) {
-                    navigationButtonDown.click();
+                    if ((widthNumber >= 97 || widthNumber >= 98 || widthNumber >= 99) && !isClicked) {
+                    console.log("PB: ",widthNumber);
+                      navigationButtonDown.click();
                     isClicked = true;
                     setTimeout(setupObserverForShort, 1000);
                   }
@@ -320,12 +319,12 @@ function setupObserverForShort() {
     );
   }
 }
-document.addEventListener('wheel', function (event) {
-  if (event.deltaY > 0) {
-    console.log('Mouse wheel scrolled down');
-    isClicked = true;
-    setTimeout(setupObserverForShort, 1000);
-  }
+
+document.addEventListener("wheel", function(event) {
+    if (event.deltaY > 0 || event.deltaY < 0) {
+         isClicked = true;
+        setTimeout(setupObserverForShort, 1000);
+    }
 });
 
 document.addEventListener('keydown', function (event) {
