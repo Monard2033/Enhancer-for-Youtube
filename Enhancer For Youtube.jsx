@@ -44,6 +44,8 @@ function updatePlayerPosition() {
       maxWidthValue = 1850;
     }
     primaryElement.style.maxWidth = maxWidthValue + 'px';
+    primaryElement.style.marginTop = '12px';
+    primaryElement.style.marginLeft = '0px';
     columnsElement.style.maxWidth = maxWidthValue + 'px';
   }
 
@@ -99,12 +101,9 @@ function updatePlayerPosition() {
             backdrop-filter: brightness(0.6) !important;
         }
 
-        #columns.ytd-watch-flexy {
-            margin-top: 0 !important;
-        }
-
         ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
             min-width: 450px !important;
+           padding-right: 0px !important;
         }
 
         .ytSearchboxComponentSearchButton {
@@ -173,29 +172,6 @@ function updatePlayerPosition() {
             top: 55px !important;
             left: ${position}px !important;
             z-index: 100 !important;
-        }
-
-        body._top-right._560x315 #efyt-progress {
-            top: 360px !important;
-            border-bottom-right-radius: 860px;
-            border-bottom-left-radius: 860px;
-            left: ${position}px !important;
-            height: 10px !important;
-            max-width: 560px !important;
-            margin-left: 1.5px !important;
-            z-index: 200 !important;
-            overflow: hidden !important;
-        }
-
-        #efyt-progress::-webkit-progress-bar {
-            max-width: 560px !important;
-            overflow: hidden !important;
-            border-bottom-left-radius: 860px;
-            border-bottom-right-radius: 860px;
-        }
-         #efyt-progress::-webkit-progress-value {
-            border-top-right-radius: 860px;
-            border-bottom-right-radius: 860px;
         }
 
         body._top-right #efyt-close-mini-player {
@@ -284,9 +260,9 @@ function setupObserverForShort() {
                   let ariaValueText =
                     progressBarElement.getAttribute('aria-valuetext');
                   let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                    if ((widthNumber >= 97 || widthNumber >= 98 || widthNumber >= 99) && !isClicked) {
-                    console.log("PB: ",widthNumber);
-                      navigationButtonDown.click();
+                  if (widthNumber >= 99 && !isClicked) {
+                    console.log('PB: ', widthNumber);
+                    navigationButtonDown.click();
                     isClicked = true;
                     setTimeout(setupObserverForShort, 1000);
                   }
@@ -320,11 +296,11 @@ function setupObserverForShort() {
   }
 }
 
-document.addEventListener("wheel", function(event) {
-    if (event.deltaY > 0 || event.deltaY < 0) {
-         isClicked = true;
-        setTimeout(setupObserverForShort, 1000);
-    }
+document.addEventListener('wheel', function (event) {
+  if (event.deltaY > 0 || event.deltaY < 0) {
+    isClicked = true;
+    setTimeout(setupObserverForShort, 1000);
+  }
 });
 
 document.addEventListener('keydown', function (event) {
