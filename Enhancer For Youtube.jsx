@@ -4,6 +4,8 @@ let position;
 var viewportWidth = window.innerWidth;
 let observer = null;
 let isClicked = true;
+let isSkippingEnabled = true; // Toggle state
+let isRestartScheduled = false;
 const scrollToTopBtn = document.createElement('button');
 const svgElement = document.createElementNS(
   'http://www.w3.org/2000/svg',
@@ -43,7 +45,7 @@ function updatePlayerPosition() {
       console.log('Default resolution');
       maxWidthValue = 1850;
     }
-    primaryElement.style.maxWidth = maxWidthValue + 'px';
+    primaryElement.style.maxWidth = '1650px';
     primaryElement.style.marginTop = '12px';
     primaryElement.style.marginLeft = '0px';
     columnsElement.style.maxWidth = maxWidthValue + 'px';
@@ -232,7 +234,7 @@ function waitForDOMElement(
         setTimeout(checkElement, interval);
       } else {
         console.error(
-          `Element with selector "${selector}" not found within ${timeout}ms.`
+          `Element with selector ${selector} not found within ${timeout} ms.`
         );
       }
     };
@@ -240,10 +242,11 @@ function waitForDOMElement(
   }
 }
 
+
 function setupObserverForShort() {
-  if (checkIfShortsPage() && isClicked) {
-    console.log('YT Shorts Found, Script is working');
+  if (checkIfShortsPage()) {
     isClicked = false;
+    
     waitForDOMElement(
       '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
       progressBarElement => {
@@ -254,21 +257,41 @@ function setupObserverForShort() {
               observer.disconnect();
             }
 
+            let maxWidth = 0;
+
             observer = new MutationObserver(mutations => {
               mutations.forEach(mutation => {
-                if (mutation.attributeName === 'aria-valuetext') {
-                  let ariaValueText =
-                    progressBarElement.getAttribute('aria-valuetext');
+                if (
+                  mutation.attributeName === 'aria-valuetext' &&
+                  isSkippingEnabled
+                ) {
+                  let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
                   let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                  if (widthNumber >= 99 && !isClicked) {
-                    console.log('PB: ', widthNumber);
+
+                  if (widthNumber >= maxWidth) {
+                    maxWidth = widthNumber;
+                  } else if (
+                    maxWidth >= 97 &&
+                    widthNumber < maxWidth - 10 &&
+                    !isClicked
+                  ) {
                     navigationButtonDown.click();
                     isClicked = true;
-                    setTimeout(setupObserverForShort, 1000);
+                    observer.disconnect();
+                    
+                    if (!isRestartScheduled) {
+                      isRestartScheduled = true;
+                      setTimeout(() => {
+                        isRestartScheduled = false;
+                        setupObserverForShort();
+                      }, 1000);
+                    }
+                    maxWidth = 0;
                   }
                 }
               });
             });
+
             observer.observe(progressBarElement, {
               attributes: true,
               attributeFilter: ['aria-valuetext'],
@@ -277,28 +300,128 @@ function setupObserverForShort() {
             navigationButtonDown.addEventListener(
               'click',
               function observerReinitHandler() {
-                navigationButtonDown.removeEventListener(
-                  'click',
-                  observerReinitHandler
-                );
+                navigationButtonDown.removeEventListener('click', observerReinitHandler);
                 isClicked = true;
-                setTimeout(setupObserverForShort, 1000);
+                
+                if (!isRestartScheduled) {
+                  isRestartScheduled = true;
+                  setTimeout(() => {
+                    isRestartScheduled = false;
+                    setupObserverForShort();
+                  }, 1000);
+                }
               }
             );
           },
-          100, // Polling interval
-          10000 // Timeout
+          100,
+          10000
         );
       },
-      100, // Polling interval
-      10000 // Timeout
+      100,
+      10000
     );
   }
 }
 
+
+function addToggleButton() {
+  if (!checkIfShortsPage()) return; // Only show on Shorts pages
+
+  // Create style element
+  const toggleStyles = document.createElement('style');
+  toggleStyles.textContent = `
+    :root {
+        --dark-bg: rgba(100,100,100, 0.5); /* 50% dark circle for light theme */
+        --dark-bg-hover: rgba(150, 150, 150, 0.5); /* 80% dark circle for light theme hover */
+        --light-bg: rgba(200, 200, 200, 0.5); /* 50% light circle for dark theme */
+        --light-bg-hover: rgba(150, 150, 150, 0.5); /* 80% light circle for dark theme hover */
+    }
+
+    .skip-toggle-btn {
+        position: fixed;
+        top: 380px; /* Adjusted from bottom to top */
+        right: 25px; /* Positioned on the right */
+        width: 55px;
+        height: 55px;
+        padding: 0;
+        border: 1px solid red;
+        border-radius: 50%;
+        background-color: var(--light-bg);
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        z-index: 1000;
+        opacity: 1;
+    }
+    .skip-toggle-btn:hover {
+        background-color: var(--light-bg-hover);
+    }
+    @media (prefers-color-scheme: dark) {
+        .skip-toggle-btn {
+            background-color: var(--dark-bg);
+        }
+        .skip-toggle-btn:hover {
+            background-color: var(--dark-bg-hover);
+        }
+    }
+    .toggle-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        font-size: 20px; /* Size of the icon */
+        color: #c00; /* White icon for visibility */
+    }
+  `;
+  document.head.appendChild(toggleStyles);
+
+  const toggleButton = document.createElement('button');
+  toggleButton.id = 'shorts-skip-toggle';
+  toggleButton.className = 'skip-toggle-btn';
+  toggleButton.title = 'Toggle Video Skipping (ON = Skip, OFF = No Skip)';
+
+  const icon = document.createElement('span');
+  icon.className = 'toggle-icon';
+  icon.textContent = 'ON';
+  toggleButton.appendChild(icon);
+
+  document.body.appendChild(toggleButton);
+  toggleButton.addEventListener('click', () => {
+    isSkippingEnabled = !isSkippingEnabled;
+    icon.textContent = isSkippingEnabled ? 'ON' : 'OFF';
+    console.log(`Auto-Skip ${isSkippingEnabled ? 'Enabled' : 'Disabled'}`);
+
+    if (isSkippingEnabled) {
+      // If observer exists but is disconnected, reattach it
+      const progressBarElement = document.querySelector(
+        '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
+      );
+      const navigationButtonDown = document.querySelector(
+        '#navigation-button-down > ytd-button-renderer > yt-button-shape > button'
+      );
+
+      if (progressBarElement && navigationButtonDown && observer) {
+        console.log('Resuming existing observer');
+        observer.observe(progressBarElement, {
+          attributes: true,
+          attributeFilter: ['aria-valuetext'],
+        });
+      } else if (!isClicked) {
+        // Start fresh if no observer or elements are missing
+        console.log('Starting fresh observer setup');
+        setupObserverForShort(toggleButton);
+      }
+    } else if (!isSkippingEnabled && observer) {
+      console.log('Disconnecting observer');
+      observer.disconnect();
+    }
+  });
+  return toggleButton; // Return reference for initialization
+}
 document.addEventListener('wheel', function (event) {
-  if (event.deltaY > 0 || event.deltaY < 0) {
+  if (event.deltaY < 0 || event.deltaY > 0) {
     isClicked = true;
+    observer.disconnect();
     setTimeout(setupObserverForShort, 1000);
   }
 });
@@ -306,9 +429,22 @@ document.addEventListener('wheel', function (event) {
 document.addEventListener('keydown', function (event) {
   if (event.keyCode === 38 || event.keyCode === 40) {
     isClicked = true;
+    observer.disconnect();
     setTimeout(setupObserverForShort, 1000);
   }
 });
+
+function dispatchSpacebarEvent() {
+  const spacebarEvent = new KeyboardEvent('keydown', {
+    key: ' ',
+    code: 'Space',
+    keyCode: 32,
+    bubbles: true,
+    cancelable: true,
+  });
+  document.dispatchEvent(spacebarEvent);
+}
+
 
 function checkIfWatchPage() {
   return window.location.href.includes('youtube.com/watch');
@@ -393,9 +529,7 @@ scrollTopBtnStyles.textContent = `
 document.head.appendChild(styleElement);
 document.head.appendChild(scrollTopBtnStyles);
 document.body.appendChild(scrollToTopBtn);
-updatePlayerPosition();
-setupObserverForShort();
-
+window.addEventListener('popstate', toggleScrollToTopButton);
 window.addEventListener('resize', adjustDynamicStyles);
 window.addEventListener('resize', updatePlayerPosition);
 window.addEventListener('scroll', updatePlayerPosition);
@@ -418,7 +552,10 @@ document.getElementById('scroll-to-top').addEventListener('click', function () {
     behavior: 'smooth',
   });
 });
-document.addEventListener('DOMContentLoaded', adjustDynamicStyles);
-document.addEventListener('DOMContentLoaded', toggleScrollToTopButton);
-document.addEventListener('DOMContentLoaded', setupObserverForShort);
-window.addEventListener('popstate', toggleScrollToTopButton);
+
+setupObserverForShort();
+updatePlayerPosition();
+toggleScrollToTopButton();
+adjustDynamicStyles();
+
+
