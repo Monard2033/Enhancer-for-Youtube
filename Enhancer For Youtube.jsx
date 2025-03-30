@@ -1,3 +1,4 @@
+// Variable Declarations
 var styleElement = document.createElement('style');
 let buttonPosition;
 let position;
@@ -7,23 +8,89 @@ let isClicked = true;
 let isSkippingEnabled = true; // Toggle state
 let isRestartScheduled = false;
 const scrollToTopBtn = document.createElement('button');
-const svgElement = document.createElementNS(
-  'http://www.w3.org/2000/svg',
-  'svg'
-);
-const pathElement = document.createElementNS(
-  'http://www.w3.org/2000/svg',
-  'path'
-);
+const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 const divElement = document.createElement('div');
 const scrollTopBtnStyles = document.createElement('style');
 
+// Conditional Logic for Button Position
 if (window.screen.width === 2560 && window.screen.height === 1440) {
   buttonPosition = viewportWidth * 0.73;
 } else {
   buttonPosition = viewportWidth * 0.7 - 30;
 }
 
+// DOM Manipulations
+scrollToTopBtn.id = 'scroll-to-top';
+scrollToTopBtn.classList.add('scroll-top-btn');
+scrollToTopBtn.setAttribute('aria-label', 'Scroll to Top');
+
+svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+svgElement.setAttribute('height', '24');
+svgElement.setAttribute('viewBox', '0 0 24 24');
+svgElement.setAttribute('width', '24');
+svgElement.setAttribute('focusable', 'false');
+svgElement.style.fill = 'red';
+svgElement.style.display = 'flex';
+
+pathElement.setAttribute('d', 'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z');
+
+svgElement.appendChild(pathElement);
+
+divElement.classList.add('scroll-up-btn');
+divElement.appendChild(svgElement);
+
+scrollToTopBtn.appendChild(divElement);
+
+scrollTopBtnStyles.textContent = `
+  :root {
+    --dark-bg: rgba(100,100,100, 0.5); /* 50% dark circle for light theme */
+    --dark-bg-hover: rgba(150, 150, 150, 0.5); /* 80% dark circle for light theme hover */
+    --light-bg: rgba(200, 200, 200, 0.5); /* 50% light circle for dark theme */
+    --light-bg-hover: rgba(150, 150, 150, 0.5); /* 80% light circle for dark theme hover */
+  }
+
+  /* Light theme */
+  .scroll-top-btn {
+    position: fixed;
+    opacity: 0;
+    bottom: 20px;
+    left: ${buttonPosition}px;
+    width: 55px;
+    height: 55px;
+    border: 1px solid red;
+    padding: 0;
+    border-radius: 50%;
+    background-color: var(--light-bg);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .scroll-top-btn:hover {
+    background-color: var(--light-bg-hover);
+  }
+  /* Dark theme */
+  @media (prefers-color-scheme: dark) {
+    .scroll-top-btn {
+      background-color: var(--dark-bg);
+    }
+    .scroll-top-btn:hover {
+      background-color: var(--dark-bg-hover);
+    }
+  }
+  .scroll-up-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+  }
+`;
+
+document.head.appendChild(styleElement);
+document.head.appendChild(scrollTopBtnStyles);
+document.body.appendChild(scrollToTopBtn);
+
+// Large Functions
 function updatePlayerPosition() {
   var primaryElement = document.querySelector('#primary');
   var columnsElement = document.querySelector('#columns');
@@ -42,7 +109,6 @@ function updatePlayerPosition() {
       maxWidthValue = 1850;
       position = viewportWidth * 0.45 - 30;
     } else {
-      console.log('Default resolution');
       maxWidthValue = 1850;
     }
     primaryElement.style.maxWidth = '1650px';
@@ -52,137 +118,137 @@ function updatePlayerPosition() {
   }
 
   var cssRules = `
-        #start.ytd-masthead {
-            height: 50px !important;
-            border-radius: 30px !important;
-            display: flex !important;
-            position: static !important;
-            margin: 0 10% !important;
-            border: 1px solid red !important;
-            backdrop-filter: brightness(0.6) !important;
-        }
+    #start.ytd-masthead {
+      height: 50px !important;
+      border-radius: 30px !important;
+      display: flex !important;
+      position: static !important;
+      margin: 0 10% !important;
+      border: 1px solid red !important;
+      backdrop-filter: brightness(0.6) !important;
+    }
 
-        .ytSearchboxComponentHost {
-            height: 53px !important;
-            margin: 0 12px 0 0 !important;
-        }
+    .ytSearchboxComponentHost {
+      height: 53px !important;
+      margin: 0 12px 0 0 !important;
+    }
 
-        .ytSearchboxComponentInputBox  {
-            margin-left: 0 !important;
-            margin-top: 0 !important;
-            border: 1px solid red !important;
-            box-shadow: none !important;
-            height: 50px !important;
-            background: transparent !important;
-            backdrop-filter: brightness(0.6) !important;
-            display: flex !important;
-            justify-content: space-around !important;
-        }
+    .ytSearchboxComponentInputBox {
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+      border: 1px solid red !important;
+      box-shadow: none !important;
+      height: 50px !important;
+      background: transparent !important;
+      backdrop-filter: brightness(0.6) !important;
+      display: flex !important;
+      justify-content: space-around !important;
+    }
 
-        #center.ytd-masthead {
-            margin: auto !important;
-        }
+    #center.ytd-masthead {
+      margin: auto !important;
+    }
 
-        #container.ytd-searchbox {
-            margin-left: 0 !important;
-            border: 1px solid red !important;
-            box-shadow: none !important;
-            background: transparent !important;
-            backdrop-filter: brightness(0.6) !important;
-            display: flex !important;
-            justify-content: space-around !important;
-        }
+    #container.ytd-searchbox {
+      margin-left: 0 !important;
+      border: 1px solid red !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      backdrop-filter: brightness(0.6) !important;
+      display: flex !important;
+      justify-content: space-around !important;
+    }
 
-        #end.ytd-masthead {
-            height: 50px !important;
-            min-width: 10px !important;
-            border-radius: 30px !important;
-            position: relative !important;
-            margin: 0 10% !important;
-            border: 1px solid red !important;
-            backdrop-filter: brightness(0.6) !important;
-        }
+    #end.ytd-masthead {
+      height: 50px !important;
+      min-width: 10px !important;
+      border-radius: 30px !important;
+      position: relative !important;
+      margin: 0 10% !important;
+      border: 1px solid red !important;
+      backdrop-filter: brightness(0.6) !important;
+    }
 
-        ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
-            min-width: 450px !important;
-           padding-right: 0px !important;
-        }
+    ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
+      min-width: 450px !important;
+      padding-right: 0px !important;
+    }
 
-        .ytSearchboxComponentSearchButton {
-            background: transparent !important;
-            border: 1px solid red !important;
-            backdrop-filter: brightness(0.6) !important;
-            height: 52px !important;
-        }
+    .ytSearchboxComponentSearchButton {
+      background: transparent !important;
+      border: 1px solid red !important;
+      backdrop-filter: brightness(0.6) !important;
+      height: 52px !important;
+    }
 
-        .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
-            backdrop-filter: brightness(0.6) !important;
-            color: white !important;
-        }
+    .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
+      backdrop-filter: brightness(0.6) !important;
+      color: white !important;
+    }
 
-        #background.ytd-masthead {
-            position: fixed !important;
-            opacity: 0 !important;
-            visibility: visible !important;
-            --light-theme-text-color: invert !important;
-        }
+    #background.ytd-masthead {
+      position: fixed !important;
+      opacity: 0 !important;
+      visibility: visible !important;
+      --light-theme-text-color: invert !important;
+    }
 
-        #search-form.ytd-searchbox {
-            height: 50px !important;
-        }
+    #search-form.ytd-searchbox {
+      height: 50px !important;
+    }
 
-        ytd-searchbox.ytd-masthead {
-            margin: 0 !important;
-            padding: 0 10px !important;
-        }
+    ytd-searchbox.ytd-masthead {
+      margin: 0 !important;
+      padding: 0 10px !important;
+    }
 
-        #sections.ytd-guide-renderer {
-            position: relative !important;
-        }
+    #sections.ytd-guide-renderer {
+      position: relative !important;
+    }
 
-        #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child{
-            padding: 0px !important;
-        }
+    #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child {
+      padding: 0px !important;
+    }
 
-        #voice-search-button.ytd-masthead {
-            margin-left:0 !important;
-            border: 1px solid red !important;
-            background: transparent !important;
-            backdrop-filter: brightness(0.6) !important;
-        }
+    #voice-search-button.ytd-masthead {
+      margin-left: 0 !important;
+      border: 1px solid red !important;
+      background: transparent !important;
+      backdrop-filter: brightness(0.6) !important;
+    }
 
-        #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
-            display: none !important;
-        }
+    #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
+      display: none !important;
+    }
 
-        .yt-spec-touch-feedback-shape__fill {
-            background-color: black !important;
-        }
+    .yt-spec-touch-feedback-shape__fill {
+      background-color: black !important;
+    }
 
-        .yt-spec-icon-shape {
-            color: #c00 !important;
-        }
+    .yt-spec-icon-shape {
+      color: #c00 !important;
+    }
 
-        ytd-feed-filter-chip-bar-renderer {
-            height: 0 !important;
-        }
+    ytd-feed-filter-chip-bar-renderer {
+      height: 0 !important;
+    }
 
-        body.efyt-mini-player.efyt-mini-player-top-right #movie_player:not(.ytp-fullscreen) {
-            height: 315px !important;
-            border-radius: 14px !important;
-            width: 560px !important;
-            top: 55px !important;
-            left: ${position}px !important;
-            z-index: 100 !important;
-        }
+    body.efyt-mini-player.efyt-mini-player-top-right #movie_player:not(.ytp-fullscreen) {
+      height: 315px !important;
+      border-radius: 14px !important;
+      width: 560px !important;
+      top: 55px !important;
+      left: ${position}px !important;
+      z-index: 100 !important;
+    }
 
-        body._top-right #efyt-close-mini-player {
-           top: 60px !important;
-            left: ${position}px !important;
-            width: 3% !important;
-            height: 3% !important;
-        }
-    `;
+    body._top-right #efyt-close-mini-player {
+      top: 60px !important;
+      left: ${position}px !important;
+      width: 3% !important;
+      height: 3% !important;
+    }
+  `;
   styleElement.textContent = cssRules;
 }
 
@@ -192,38 +258,29 @@ function adjustDynamicStyles() {
 
   if (masthead && center) {
     const windowWidth = window.innerWidth;
-
-    // Calculate masthead width
     let mastheadWidth = 0;
     if (windowWidth <= 658) {
-      mastheadWidth = 0; // Minimum width for masthead
+      mastheadWidth = 0;
     } else if (windowWidth >= 1750) {
-      mastheadWidth = 100; // Maximum width for masthead
+      mastheadWidth = 100;
     } else {
-      mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100; // Interpolated width
+      mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100;
     }
     masthead.style.width = `${mastheadWidth}%`;
 
-    // Calculate center flex-basis
     let centerFlexBasis = 0;
     if (windowWidth <= 658) {
-      centerFlexBasis = 200; // Minimum flex-basis for center
+      centerFlexBasis = 200;
     } else if (windowWidth >= 1750) {
-      centerFlexBasis = 550; // Maximum flex-basis for center
+      centerFlexBasis = 550;
     } else {
-      centerFlexBasis =
-        200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200); // Interpolated flex-basis
+      centerFlexBasis = 200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200);
     }
-    center.style.flex = `0 0 ${centerFlexBasis}px`; // Apply calculated flex-basis
+    center.style.flex = `0 0 ${centerFlexBasis}px`;
   }
 }
 
-function waitForDOMElement(
-  selector,
-  callback,
-  interval = 100,
-  timeout = 10000
-) {
+function waitForDOMElement(selector, callback, interval = 100, timeout = 10000) {
   if (checkIfShortsPage()) {
     const startTime = Date.now();
     const checkElement = () => {
@@ -232,21 +289,15 @@ function waitForDOMElement(
         callback(element);
       } else if (Date.now() - startTime < timeout) {
         setTimeout(checkElement, interval);
-      } else {
-        console.error(
-          `Element with selector ${selector} not found within ${timeout} ms.`
-        );
       }
     };
     checkElement();
   }
 }
 
-
 function setupObserverForShort() {
   if (checkIfShortsPage()) {
     isClicked = false;
-    
     waitForDOMElement(
       '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
       progressBarElement => {
@@ -256,29 +307,19 @@ function setupObserverForShort() {
             if (observer) {
               observer.disconnect();
             }
-
             let maxWidth = 0;
 
             observer = new MutationObserver(mutations => {
               mutations.forEach(mutation => {
-                if (
-                  mutation.attributeName === 'aria-valuetext' &&
-                  isSkippingEnabled
-                ) {
+                if (mutation.attributeName === 'aria-valuetext' && isSkippingEnabled) {
                   let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
                   let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-
                   if (widthNumber >= maxWidth) {
                     maxWidth = widthNumber;
-                  } else if (
-                    maxWidth >= 97 &&
-                    widthNumber < maxWidth - 10 &&
-                    !isClicked
-                  ) {
+                  } else if (maxWidth >= 97 && widthNumber < maxWidth - 10 && !isClicked) {
                     navigationButtonDown.click();
                     isClicked = true;
                     observer.disconnect();
-                    
                     if (!isRestartScheduled) {
                       isRestartScheduled = true;
                       setTimeout(() => {
@@ -302,14 +343,6 @@ function setupObserverForShort() {
               function observerReinitHandler() {
                 navigationButtonDown.removeEventListener('click', observerReinitHandler);
                 isClicked = true;
-                
-                if (!isRestartScheduled) {
-                  isRestartScheduled = true;
-                  setTimeout(() => {
-                    isRestartScheduled = false;
-                    setupObserverForShort();
-                  }, 1000);
-                }
               }
             );
           },
@@ -323,54 +356,52 @@ function setupObserverForShort() {
   }
 }
 
-
 function addToggleButton() {
-  if (!checkIfShortsPage()) return; // Only show on Shorts pages
+  if (!checkIfShortsPage()) return;
 
-  // Create style element
   const toggleStyles = document.createElement('style');
   toggleStyles.textContent = `
     :root {
-        --dark-bg: rgba(100,100,100, 0.5); /* 50% dark circle for light theme */
-        --dark-bg-hover: rgba(150, 150, 150, 0.5); /* 80% dark circle for light theme hover */
-        --light-bg: rgba(200, 200, 200, 0.5); /* 50% light circle for dark theme */
-        --light-bg-hover: rgba(150, 150, 150, 0.5); /* 80% light circle for dark theme hover */
+      --dark-bg: rgba(100,100,100, 0.5);
+      --dark-bg-hover: rgba(150, 150, 150, 0.5);
+      --light-bg: rgba(200, 200, 200, 0.5);
+      --light-bg-hover: rgba(150, 150, 150, 0.5);
     }
 
     .skip-toggle-btn {
-        position: fixed;
-        top: 380px; /* Adjusted from bottom to top */
-        right: 25px; /* Positioned on the right */
-        width: 55px;
-        height: 55px;
-        padding: 0;
-        border: 1px solid red;
-        border-radius: 50%;
-        background-color: var(--light-bg);
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        z-index: 1000;
-        opacity: 1;
+      position: fixed;
+      top: 380px;
+      right: 25px;
+      width: 55px;
+      height: 55px;
+      padding: 0;
+      border: 1px solid red;
+      border-radius: 50%;
+      background-color: var(--light-bg);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      z-index: 1000;
+      opacity: 1;
     }
     .skip-toggle-btn:hover {
-        background-color: var(--light-bg-hover);
+      background-color: var(--light-bg-hover);
     }
     @media (prefers-color-scheme: dark) {
-        .skip-toggle-btn {
-            background-color: var(--dark-bg);
-        }
-        .skip-toggle-btn:hover {
-            background-color: var(--dark-bg-hover);
-        }
+      .skip-toggle-btn {
+        background-color: var(--dark-bg);
+      }
+      .skip-toggle-btn:hover {
+        background-color: var(--dark-bg-hover);
+      }
     }
     .toggle-icon {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        width: 100%;
-        font-size: 20px; /* Size of the icon */
-        color: #c00; /* White icon for visibility */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+      font-size: 20px;
+      color: #c00;
     }
   `;
   document.head.appendChild(toggleStyles);
@@ -386,13 +417,12 @@ function addToggleButton() {
   toggleButton.appendChild(icon);
 
   document.body.appendChild(toggleButton);
+
   toggleButton.addEventListener('click', () => {
     isSkippingEnabled = !isSkippingEnabled;
     icon.textContent = isSkippingEnabled ? 'ON' : 'OFF';
-    console.log(`Auto-Skip ${isSkippingEnabled ? 'Enabled' : 'Disabled'}`);
 
     if (isSkippingEnabled) {
-      // If observer exists but is disconnected, reattach it
       const progressBarElement = document.querySelector(
         '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
       );
@@ -401,38 +431,28 @@ function addToggleButton() {
       );
 
       if (progressBarElement && navigationButtonDown && observer) {
-        console.log('Resuming existing observer');
         observer.observe(progressBarElement, {
           attributes: true,
           attributeFilter: ['aria-valuetext'],
         });
       } else if (!isClicked) {
-        // Start fresh if no observer or elements are missing
-        console.log('Starting fresh observer setup');
-        setupObserverForShort(toggleButton);
+        setupObserverForShort();
       }
     } else if (!isSkippingEnabled && observer) {
-      console.log('Disconnecting observer');
       observer.disconnect();
     }
   });
-  return toggleButton; // Return reference for initialization
+  return toggleButton;
 }
-document.addEventListener('wheel', function (event) {
-  if (event.deltaY < 0 || event.deltaY > 0) {
-    isClicked = true;
-    observer.disconnect();
-    setTimeout(setupObserverForShort, 1000);
-  }
-});
 
-document.addEventListener('keydown', function (event) {
-  if (event.keyCode === 38 || event.keyCode === 40) {
-    isClicked = true;
-    observer.disconnect();
-    setTimeout(setupObserverForShort, 1000);
-  }
-});
+// Small Helper Functions
+function checkIfWatchPage() {
+  return window.location.href.includes('youtube.com/watch');
+}
+
+function checkIfShortsPage() {
+  return window.location.href.includes('youtube.com/shorts');
+}
 
 function dispatchSpacebarEvent() {
   const spacebarEvent = new KeyboardEvent('keydown', {
@@ -445,117 +465,47 @@ function dispatchSpacebarEvent() {
   document.dispatchEvent(spacebarEvent);
 }
 
-
-function checkIfWatchPage() {
-  return window.location.href.includes('youtube.com/watch');
-}
-function checkIfShortsPage() {
-  return window.location.href.includes('youtube.com/shorts');
-}
-
-function toggleScrollToTopButton() {
+function updateScrollToTopButtonVisibility() {
+  const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
   const scrollToTopBtn = document.getElementById('scroll-to-top');
-  scrollToTopBtn.style.opacity = checkIfWatchPage() ? '1' : '0';
+  if (scrollPosition > 1000 && checkIfWatchPage()) {
+    scrollToTopBtn.style.opacity = '1';
+  } else {
+    scrollToTopBtn.style.opacity = '0';
+  }
 }
 
-scrollToTopBtn.id = 'scroll-to-top';
-scrollToTopBtn.classList.add('scroll-top-btn');
-scrollToTopBtn.setAttribute('aria-label', 'Scroll to Top');
+// Event Listeners
+document.addEventListener('wheel', function(event) {
+  if (event.deltaY < 0 || event.deltaY > 0) {
+    isClicked = true;
+    observer.disconnect();
+    setTimeout(setupObserverForShort, 1000);
+  }
+});
+document.addEventListener('keydown', function(event) {
+  if (event.keyCode === 38 || event.keyCode === 40) {
+    isClicked = true;
+    observer.disconnect();
+    setTimeout(setupObserverForShort, 1000);
+  }
+});
 
-svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-svgElement.setAttribute('height', '24');
-svgElement.setAttribute('viewBox', '0 0 24 24');
-svgElement.setAttribute('width', '24');
-svgElement.setAttribute('focusable', 'false');
-svgElement.style.fill = 'red';
-svgElement.style.display = 'flex';
-
-pathElement.setAttribute(
-  'd',
-  'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z'
-);
-
-svgElement.appendChild(pathElement);
-
-divElement.classList.add('scroll-up-btn');
-divElement.appendChild(svgElement);
-
-scrollToTopBtn.appendChild(divElement);
-
-scrollTopBtnStyles.textContent = `
-    :root {
-        --dark-bg: rgba(100,100,100, 0.5); /* 50% dark circle for light theme */
-        --dark-bg-hover: rgba(150, 150, 150, 0.5); /* 80% dark circle for light theme hover */
-        --light-bg: rgba(200, 200, 200, 0.5); /* 50% light circle for dark theme */
-        --light-bg-hover: rgba(150, 150, 150, 0.5); /* 80% light circle for dark theme hover */
-    }
-
-    /* Light theme */
-    .scroll-top-btn {
-        position: fixed;
-        opacity: 0;
-        bottom: 20px;
-        left: ${buttonPosition}px;
-        width: 55px;
-        height: 55px;
-        border: 1px solid red;
-        padding: 0;
-        border-radius: 50%;
-        background-color: var(--light-bg);
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-    .scroll-top-btn:hover {
-        background-color: var(--light-bg-hover);
-    }
-    /* Dark theme */
-    @media (prefers-color-scheme: dark) {
-        .scroll-top-btn {
-            background-color: var(--dark-bg);
-        }
-        .scroll-top-btn:hover {
-            background-color: var(--dark-bg-hover);
-        }
-    }
-    .scroll-up-btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100%; /* Adjust as necessary */
-        width: 100%;  /* Adjust as necessary */
-    }
-`;
-
-document.head.appendChild(styleElement);
-document.head.appendChild(scrollTopBtnStyles);
-document.body.appendChild(scrollToTopBtn);
-window.addEventListener('popstate', toggleScrollToTopButton);
+window.addEventListener('popstate', updateScrollToTopButtonVisibility);
 window.addEventListener('resize', adjustDynamicStyles);
 window.addEventListener('resize', updatePlayerPosition);
 window.addEventListener('scroll', updatePlayerPosition);
-window.addEventListener('scroll', () => {
-  const scrollPosition =
-    window.pageYOffset || document.documentElement.scrollTop;
-  const scrollToTopBtn = document.getElementById('scroll-to-top');
-
-  if (scrollPosition > 1000 && checkIfWatchPage()) {
-    scrollToTopBtn.classList.add('show');
-    scrollToTopBtn.style.opacity = 1;
-  } else {
-    scrollToTopBtn.classList.remove('show');
-    scrollToTopBtn.style.opacity = 0;
-  }
-});
-document.getElementById('scroll-to-top').addEventListener('click', function () {
+window.addEventListener('scroll', updateScrollToTopButtonVisibility);
+document.getElementById('scroll-to-top').addEventListener('click', function() {
   window.scrollTo({
     top: 0,
     behavior: 'smooth',
   });
 });
 
+// Function Calls
 setupObserverForShort();
 updatePlayerPosition();
-toggleScrollToTopButton();
 adjustDynamicStyles();
-
-
+updateScrollToTopButtonVisibility();
+addToggleButton();
