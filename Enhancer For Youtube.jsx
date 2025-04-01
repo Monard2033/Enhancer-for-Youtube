@@ -7,6 +7,7 @@ let observer = null;
 let isClicked = true;
 let isSkippingEnabled = true; // Toggle state
 let isRestartScheduled = false;
+let hasNavigationButtonBeenFetched = false;
 const scrollToTopBtn = document.createElement('button');
 const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -266,7 +267,7 @@ function adjustDynamicStyles() {
     } else {
       mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100;
     }
-    masthead.style.width = `${mastheadWidth}%`;
+    //masthead.style.width = `${mastheadWidth}%`;
 
     let centerFlexBasis = 0;
     if (windowWidth <= 658) {
@@ -292,73 +293,85 @@ function waitForDOMElement(selector, callback, interval = 100, timeout = 10000) 
       }
     };
     checkElement();
-  }
+  } else {return;}
 }
 
-function setupObserverForShort() {
-  if (checkIfShortsPage()) {
-    isClicked = false;
+function restartObserver() {
+  if (isRestartScheduled) {
+    return;
+  }
+  isRestartScheduled = true;
+  setTimeout(() => {
+    isRestartScheduled = false;
+    ShortsSkipping();
+  }, 1000);
+}
+
+function ShortsSkipping() {
+ if (checkIfShortsPage()) {
+   isClicked = false;
+
+  if (!hasNavigationButtonBeenFetched) {
     waitForDOMElement(
-      '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
-      progressBarElement => {
-        waitForDOMElement(
-          '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
-          navigationButtonDown => {
-            if (observer) {
-              observer.disconnect();
-            }
-            let maxWidth = 0;
+      '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
+      button => {
+        navigationButtonDown = button;
+        hasNavigationButtonBeenFetched = true;
 
-            observer = new MutationObserver(mutations => {
-              mutations.forEach(mutation => {
-                if (mutation.attributeName === 'aria-valuetext' && isSkippingEnabled) {
-                  let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
-                  let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                  if (widthNumber >= maxWidth) {
-                    maxWidth = widthNumber;
-                  } else if (maxWidth >= 97 && widthNumber < maxWidth - 10 && !isClicked) {
-                    navigationButtonDown.click();
-                    isClicked = true;
-                    observer.disconnect();
-                    if (!isRestartScheduled) {
-                      isRestartScheduled = true;
-                      setTimeout(() => {
-                        isRestartScheduled = false;
-                        setupObserverForShort();
-                      }, 1000);
-                    }
-                    maxWidth = 0;
-                  }
-                }
-              });
-            });
-
-            observer.observe(progressBarElement, {
-              attributes: true,
-              attributeFilter: ['aria-valuetext'],
-            });
-
-            navigationButtonDown.addEventListener(
-              'click',
-              function observerReinitHandler() {
-                navigationButtonDown.removeEventListener('click', observerReinitHandler);
-                isClicked = true;
-              }
-            );
-          },
-          100,
-          10000
-        );
+        navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
+          if (!e.isTrusted) return;
+          navigationButtonDown.removeEventListener('click', observerReinitHandler);
+          if (observer) {
+            observer.disconnect();
+          }
+          restartObserver();
+        });
       },
       100,
       10000
     );
   }
+
+  waitForDOMElement(
+    '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
+    progressBarElement => {
+      if (observer) {
+        observer.disconnect();
+      }
+      let maxWidth = 0;
+
+      observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+          if (mutation.attributeName === 'aria-valuetext' && isSkippingEnabled) {
+            let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
+            let widthNumber = parseFloat(ariaValueText.replace('%', ''));
+            if (widthNumber >= maxWidth) {
+              maxWidth = widthNumber;
+            } else if (maxWidth >= 95 && widthNumber < maxWidth - 10 && !isClicked) {
+              dispatchSpacebarEvent();
+              navigationButtonDown.click();
+              isClicked = true;
+              observer.disconnect();
+              restartObserver();
+              maxWidth = 0;
+            }
+          }
+        });
+      });
+
+      observer.observe(progressBarElement, {
+        attributes: true,
+        attributeFilter: ['aria-valuetext'],
+      });
+    },
+    100,
+    10000
+  );
+ } else {return;}
 }
 
 function addToggleButton() {
-  if (!checkIfShortsPage()) return;
-
+  if (checkIfShortsPage()){
   const toggleStyles = document.createElement('style');
   toggleStyles.textContent = `
     :root {
@@ -435,14 +448,12 @@ function addToggleButton() {
           attributes: true,
           attributeFilter: ['aria-valuetext'],
         });
-      } else if (!isClicked) {
-        setupObserverForShort();
-      }
+      } 
     } else if (!isSkippingEnabled && observer) {
       observer.disconnect();
     }
   });
-  return toggleButton;
+  }
 }
 
 // Small Helper Functions
@@ -474,28 +485,33 @@ function updateScrollToTopButtonVisibility() {
     scrollToTopBtn.style.opacity = '0';
   }
 }
+// Event Listeners with Debouncing
+let lastWheelEvent = 0;
+let lastKeyEvent = 0;
+const debounceDelay = 1000; // Match restartObserver delay
 
-// Event Listeners
 document.addEventListener('wheel', function(event) {
-  if (event.deltaY < 0 || event.deltaY > 0) {
-    isClicked = true;
-    observer.disconnect();
-    setTimeout(setupObserverForShort, 1000);
-  }
-});
-document.addEventListener('keydown', function(event) {
-  if (event.keyCode === 38 || event.keyCode === 40) {
-    isClicked = true;
-    observer.disconnect();
-    setTimeout(setupObserverForShort, 1000);
+  const now = Date.now();
+  if ((event.deltaY < 0 || event.deltaY > 0) && (now - lastWheelEvent >= debounceDelay)) {
+    lastWheelEvent = now;
+    if (observer) {
+      observer.disconnect();
+    }
+    restartObserver();
   }
 });
 
-window.addEventListener('popstate', updateScrollToTopButtonVisibility);
-window.addEventListener('resize', adjustDynamicStyles);
-window.addEventListener('resize', updatePlayerPosition);
-window.addEventListener('scroll', updatePlayerPosition);
-window.addEventListener('scroll', updateScrollToTopButtonVisibility);
+document.addEventListener('keydown', function(event) {
+  const now = Date.now();
+  if ((event.keyCode === 38 || event.keyCode === 40) && (now - lastKeyEvent >= debounceDelay)) {
+    lastKeyEvent = now;
+    if (observer) {
+      observer.disconnect();
+    }
+    restartObserver();
+  }
+});
+
 document.getElementById('scroll-to-top').addEventListener('click', function() {
   window.scrollTo({
     top: 0,
@@ -503,9 +519,18 @@ document.getElementById('scroll-to-top').addEventListener('click', function() {
   });
 });
 
-// Function Calls
-setupObserverForShort();
-updatePlayerPosition();
-adjustDynamicStyles();
-updateScrollToTopButtonVisibility();
-addToggleButton();
+window.addEventListener('popstate', updateScrollToTopButtonVisibility);
+window.addEventListener('popstate', addToggleButton);
+window.addEventListener('resize', adjustDynamicStyles);
+window.addEventListener('resize', updatePlayerPosition);
+window.addEventListener('scroll', updatePlayerPosition);
+window.addEventListener('scroll', updateScrollToTopButtonVisibility);
+window.addEventListener('DOMContentLoaded',SkippingShorts);
+
+window.onload = function() {
+  SkippingShorts();
+  addToggleButton();
+};
+ updatePlayerPosition();
+ adjustDynamicStyles();
+ updateScrollToTopButtonVisibility();
