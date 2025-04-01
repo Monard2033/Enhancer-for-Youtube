@@ -303,11 +303,11 @@ function restartObserver() {
   isRestartScheduled = true;
   setTimeout(() => {
     isRestartScheduled = false;
-    ShortsSkipping();
+    SkippingShorts();
   }, 1000);
 }
 
-function ShortsSkipping() {
+function SkippingShorts() {
  if (checkIfShortsPage()) {
    isClicked = false;
 
