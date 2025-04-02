@@ -5,6 +5,7 @@ let position;
 var viewportWidth = window.innerWidth;
 let observer = null;
 let isClicked = true;
+let lastUrl = location.href;
 let isSkippingEnabled = true; // Toggle state
 let isRestartScheduled = false;
 let hasNavigationButtonBeenFetched = false;
@@ -310,7 +311,6 @@ function restartObserver() {
 function SkippingShorts() {
  if (checkIfShortsPage()) {
    isClicked = false;
-
   if (!hasNavigationButtonBeenFetched) {
     waitForDOMElement(
       '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
@@ -367,11 +367,11 @@ function SkippingShorts() {
     100,
     10000
   );
- } else {return;}
+}
 }
 
 function addToggleButton() {
-  if (checkIfShortsPage()){
+ if (checkIfShortsPage()) {
   const toggleStyles = document.createElement('style');
   toggleStyles.textContent = `
     :root {
@@ -443,7 +443,7 @@ function addToggleButton() {
         '#navigation-button-down > ytd-button-renderer > yt-button-shape > button'
       );
 
-      if (progressBarElement && navigationButtonDown && observer) {
+      if (progressBarElement && navigationButtonDown) {
         observer.observe(progressBarElement, {
           attributes: true,
           attributeFilter: ['aria-valuetext'],
@@ -453,7 +453,7 @@ function addToggleButton() {
       observer.disconnect();
     }
   });
-  }
+}
 }
 
 // Small Helper Functions
@@ -485,14 +485,28 @@ function updateScrollToTopButtonVisibility() {
     scrollToTopBtn.style.opacity = '0';
   }
 }
+
+
+function checkUrlChange() {
+  const currentUrl = location.href;
+  if (currentUrl !== lastUrl) {
+    lastUrl = currentUrl;
+    if (currentUrl.includes('youtube.com/shorts')) {
+     SkippingShorts();
+    addToggleButton();
+    }
+  }
+  setTimeout(checkUrlChange, 500);
+}
+
 // Event Listeners with Debouncing
 let lastWheelEvent = 0;
 let lastKeyEvent = 0;
-const debounceDelay = 1000; // Match restartObserver delay
+const debounceDelay = 1000; 
 
 document.addEventListener('wheel', function(event) {
   const now = Date.now();
-  if ((event.deltaY < 0 || event.deltaY > 0) && (now - lastWheelEvent >= debounceDelay)) {
+  if (event.deltaY < 0 || event.deltaY > 0) {
     lastWheelEvent = now;
     if (observer) {
       observer.disconnect();
@@ -503,7 +517,7 @@ document.addEventListener('wheel', function(event) {
 
 document.addEventListener('keydown', function(event) {
   const now = Date.now();
-  if ((event.keyCode === 38 || event.keyCode === 40) && (now - lastKeyEvent >= debounceDelay)) {
+  if (event.keyCode === 38 || event.keyCode === 40) {
     lastKeyEvent = now;
     if (observer) {
       observer.disconnect();
@@ -525,12 +539,9 @@ window.addEventListener('resize', adjustDynamicStyles);
 window.addEventListener('resize', updatePlayerPosition);
 window.addEventListener('scroll', updatePlayerPosition);
 window.addEventListener('scroll', updateScrollToTopButtonVisibility);
-window.addEventListener('DOMContentLoaded',SkippingShorts);
+window.addEventListener('DOMContentLoaded', checkUrlChange);
 
-window.onload = function() {
-  SkippingShorts();
-  addToggleButton();
-};
  updatePlayerPosition();
  adjustDynamicStyles();
  updateScrollToTopButtonVisibility();
+checkUrlChange();
