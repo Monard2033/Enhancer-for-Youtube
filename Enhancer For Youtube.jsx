@@ -5,13 +5,19 @@ let position;
 var viewportWidth = window.innerWidth;
 let observer = null;
 let isClicked = true;
-let lastUrl = location.href;
+let toggleButton = null; // Store the toggle button reference
 let isSkippingEnabled = true; // Toggle state
 let isRestartScheduled = false;
 let hasNavigationButtonBeenFetched = false;
 const scrollToTopBtn = document.createElement('button');
-const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+const svgElement = document.createElementNS(
+  'http://www.w3.org/2000/svg',
+  'svg'
+);
+const pathElement = document.createElementNS(
+  'http://www.w3.org/2000/svg',
+  'path'
+);
 const divElement = document.createElement('div');
 const scrollTopBtnStyles = document.createElement('style');
 
@@ -35,7 +41,10 @@ svgElement.setAttribute('focusable', 'false');
 svgElement.style.fill = 'red';
 svgElement.style.display = 'flex';
 
-pathElement.setAttribute('d', 'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z');
+pathElement.setAttribute(
+  'd',
+  'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z'
+);
 
 svgElement.appendChild(pathElement);
 
@@ -276,13 +285,19 @@ function adjustDynamicStyles() {
     } else if (windowWidth >= 1750) {
       centerFlexBasis = 550;
     } else {
-      centerFlexBasis = 200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200);
+      centerFlexBasis =
+        200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200);
     }
     center.style.flex = `0 0 ${centerFlexBasis}px`;
   }
 }
 
-function waitForDOMElement(selector, callback, interval = 100, timeout = 10000) {
+function waitForDOMElement(
+  selector,
+  callback,
+  interval = 100,
+  timeout = 10000
+) {
   if (checkIfShortsPage()) {
     const startTime = Date.now();
     const checkElement = () => {
@@ -294,7 +309,9 @@ function waitForDOMElement(selector, callback, interval = 100, timeout = 10000) 
       }
     };
     checkElement();
-  } else {return;}
+  } else {
+    return;
+  }
 }
 
 function restartObserver() {
@@ -309,71 +326,94 @@ function restartObserver() {
 }
 
 function SkippingShorts() {
- if (checkIfShortsPage()) {
-   isClicked = false;
-  if (!hasNavigationButtonBeenFetched) {
-    waitForDOMElement(
-      '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
-      button => {
-        navigationButtonDown = button;
-        hasNavigationButtonBeenFetched = true;
+  if (checkIfShortsPage()) {
+    isClicked = false;
+    if (!hasNavigationButtonBeenFetched) {
+      waitForDOMElement(
+        '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
+        button => {
+          navigationButtonDown = button;
+          hasNavigationButtonBeenFetched = true;
 
-        navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
-          if (!e.isTrusted) return;
-          navigationButtonDown.removeEventListener('click', observerReinitHandler);
-          if (observer) {
-            observer.disconnect();
-          }
-          restartObserver();
+          navigationButtonDown.addEventListener(
+            'click',
+            function observerReinitHandler(e) {
+              if (!e.isTrusted) return;
+              navigationButtonDown.removeEventListener(
+                'click',
+                observerReinitHandler
+              );
+              if (observer) {
+                observer.disconnect();
+              }
+              restartObserver();
+            }
+          );
+        },
+        100,
+        10000
+      );
+    }
+
+    waitForDOMElement(
+      '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
+      progressBarElement => {
+        if (observer) {
+          observer.disconnect();
+        }
+        let maxWidth = 0;
+
+        observer = new MutationObserver(mutations => {
+          mutations.forEach(mutation => {
+            if (
+              mutation.attributeName === 'aria-valuetext' &&
+              isSkippingEnabled
+            ) {
+              let ariaValueText =
+                progressBarElement.getAttribute('aria-valuetext');
+              let widthNumber = parseFloat(ariaValueText.replace('%', ''));
+              if (widthNumber >= maxWidth) {
+                maxWidth = widthNumber;
+              } else if (
+                maxWidth >= 95 &&
+                widthNumber < maxWidth - 10 &&
+                !isClicked
+              ) {
+                dispatchSpacebarEvent();
+                navigationButtonDown.click();
+                isClicked = true;
+                observer.disconnect();
+                restartObserver();
+                maxWidth = 0;
+              }
+            }
+          });
+        });
+
+        observer.observe(progressBarElement, {
+          attributes: true,
+          attributeFilter: ['aria-valuetext'],
         });
       },
       100,
       10000
     );
   }
-
-  waitForDOMElement(
-    '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
-    progressBarElement => {
-      if (observer) {
-        observer.disconnect();
-      }
-      let maxWidth = 0;
-
-      observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-          if (mutation.attributeName === 'aria-valuetext' && isSkippingEnabled) {
-            let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
-            let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-            if (widthNumber >= maxWidth) {
-              maxWidth = widthNumber;
-            } else if (maxWidth >= 95 && widthNumber < maxWidth - 10 && !isClicked) {
-              dispatchSpacebarEvent();
-              navigationButtonDown.click();
-              isClicked = true;
-              observer.disconnect();
-              restartObserver();
-              maxWidth = 0;
-            }
-          }
-        });
-      });
-
-      observer.observe(progressBarElement, {
-        attributes: true,
-        attributeFilter: ['aria-valuetext'],
-      });
-    },
-    100,
-    10000
-  );
-}
 }
 
 function addToggleButton() {
- if (checkIfShortsPage()) {
-  const toggleStyles = document.createElement('style');
-  toggleStyles.textContent = `
+  if (checkIfShortsPage()) {
+    const windowHeight = window.innerHeight;
+    let buttonPosition = 0;
+    if (windowHeight <= 555) {
+      buttonPosition = 160;
+    } else if (windowHeight >= 900) {
+      buttonPosition = 365;
+    } else {
+      buttonPosition = 160 + ((windowHeight - 555) / (900 - 555)) * (365 - 160);
+    }
+    const toggleStyles = document.createElement('style');
+    toggleStyles.textContent = `
     :root {
       --dark-bg: rgba(100,100,100, 0.5);
       --dark-bg-hover: rgba(150, 150, 150, 0.5);
@@ -383,7 +423,7 @@ function addToggleButton() {
 
     .skip-toggle-btn {
       position: fixed;
-      top: 380px;
+      top: ${buttonPosition}px;
       right: 25px;
       width: 55px;
       height: 55px;
@@ -417,43 +457,43 @@ function addToggleButton() {
       color: #c00;
     }
   `;
-  document.head.appendChild(toggleStyles);
+    document.head.appendChild(toggleStyles);
 
-  const toggleButton = document.createElement('button');
-  toggleButton.id = 'shorts-skip-toggle';
-  toggleButton.className = 'skip-toggle-btn';
-  toggleButton.title = 'Toggle Video Skipping (ON = Skip, OFF = No Skip)';
+    const toggleButton = document.createElement('button');
+    toggleButton.id = 'shorts-skip-toggle';
+    toggleButton.className = 'skip-toggle-btn';
+    toggleButton.title = 'Toggle Video Skipping (ON = Skip, OFF = No Skip)';
 
-  const icon = document.createElement('span');
-  icon.className = 'toggle-icon';
-  icon.textContent = 'ON';
-  toggleButton.appendChild(icon);
+    const icon = document.createElement('span');
+    icon.className = 'toggle-icon';
+    icon.textContent = 'ON';
+    toggleButton.appendChild(icon);
 
-  document.body.appendChild(toggleButton);
+    document.body.appendChild(toggleButton);
 
-  toggleButton.addEventListener('click', () => {
-    isSkippingEnabled = !isSkippingEnabled;
-    icon.textContent = isSkippingEnabled ? 'ON' : 'OFF';
+    toggleButton.addEventListener('click', () => {
+      isSkippingEnabled = !isSkippingEnabled;
+      icon.textContent = isSkippingEnabled ? 'ON' : 'OFF';
 
-    if (isSkippingEnabled) {
-      const progressBarElement = document.querySelector(
-        '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
-      );
-      const navigationButtonDown = document.querySelector(
-        '#navigation-button-down > ytd-button-renderer > yt-button-shape > button'
-      );
+      if (isSkippingEnabled) {
+        const progressBarElement = document.querySelector(
+          '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
+        );
+        const navigationButtonDown = document.querySelector(
+          '#navigation-button-down > ytd-button-renderer > yt-button-shape > button'
+        );
 
-      if (progressBarElement && navigationButtonDown) {
-        observer.observe(progressBarElement, {
-          attributes: true,
-          attributeFilter: ['aria-valuetext'],
-        });
-      } 
-    } else if (!isSkippingEnabled && observer) {
-      observer.disconnect();
-    }
-  });
-}
+        if (progressBarElement && navigationButtonDown) {
+          observer.observe(progressBarElement, {
+            attributes: true,
+            attributeFilter: ['aria-valuetext'],
+          });
+        }
+      } else if (!isSkippingEnabled && observer) {
+        observer.disconnect();
+      }
+    });
+  }
 }
 
 // Small Helper Functions
@@ -477,7 +517,8 @@ function dispatchSpacebarEvent() {
 }
 
 function updateScrollToTopButtonVisibility() {
-  const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  const scrollPosition =
+    window.pageYOffset || document.documentElement.scrollTop;
   const scrollToTopBtn = document.getElementById('scroll-to-top');
   if (scrollPosition > 1000 && checkIfWatchPage()) {
     scrollToTopBtn.style.opacity = '1';
@@ -485,15 +526,26 @@ function updateScrollToTopButtonVisibility() {
     scrollToTopBtn.style.opacity = '0';
   }
 }
-
+function removeToggleButton() {
+  if (toggleButton && toggleButton.parentNode) {
+    toggleButton.parentNode.removeChild(toggleButton);
+    toggleButton = null; // Clear the reference
+  }
+}
 
 function checkUrlChange() {
-  const currentUrl = location.href;
+  const currentUrl = window.location.href;
+  let lastUrl = null;
   if (currentUrl !== lastUrl) {
     lastUrl = currentUrl;
-    if (currentUrl.includes('youtube.com/shorts')) {
-     SkippingShorts();
-    addToggleButton();
+    if (!currentUrl.includes('youtube.com/shorts')) {
+      removeToggleButton();
+      if (observer) {
+        observer.disconnect(); // Optional: Stop observer when leaving Shorts
+      }
+    } else {
+      SkippingShorts();
+      addToggleButton();
     }
   }
   setTimeout(checkUrlChange, 500);
@@ -502,9 +554,9 @@ function checkUrlChange() {
 // Event Listeners with Debouncing
 let lastWheelEvent = 0;
 let lastKeyEvent = 0;
-const debounceDelay = 1000; 
+const debounceDelay = 1000;
 
-document.addEventListener('wheel', function(event) {
+document.addEventListener('wheel', function (event) {
   const now = Date.now();
   if (event.deltaY < 0 || event.deltaY > 0) {
     lastWheelEvent = now;
@@ -515,7 +567,7 @@ document.addEventListener('wheel', function(event) {
   }
 });
 
-document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function (event) {
   const now = Date.now();
   if (event.keyCode === 38 || event.keyCode === 40) {
     lastKeyEvent = now;
@@ -526,7 +578,7 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
-document.getElementById('scroll-to-top').addEventListener('click', function() {
+document.getElementById('scroll-to-top').addEventListener('click', function () {
   window.scrollTo({
     top: 0,
     behavior: 'smooth',
@@ -537,11 +589,12 @@ window.addEventListener('popstate', updateScrollToTopButtonVisibility);
 window.addEventListener('popstate', addToggleButton);
 window.addEventListener('resize', adjustDynamicStyles);
 window.addEventListener('resize', updatePlayerPosition);
+window.addEventListener('resize', addToggleButton);
 window.addEventListener('scroll', updatePlayerPosition);
 window.addEventListener('scroll', updateScrollToTopButtonVisibility);
 window.addEventListener('DOMContentLoaded', checkUrlChange);
 
- updatePlayerPosition();
- adjustDynamicStyles();
- updateScrollToTopButtonVisibility();
+updatePlayerPosition();
+adjustDynamicStyles();
+updateScrollToTopButtonVisibility();
 checkUrlChange();
