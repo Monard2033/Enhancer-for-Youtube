@@ -5,6 +5,7 @@ let position;
 var viewportWidth = window.innerWidth;
 let observer = null;
 let isClicked = true;
+let lastUrl = null;
 let toggleButton = null; // Store the toggle button reference
 let isSkippingEnabled = true; // Toggle state
 let isRestartScheduled = false;
@@ -292,12 +293,8 @@ function adjustDynamicStyles() {
   }
 }
 
-function waitForDOMElement(
-  selector,
-  callback,
-  interval = 100,
-  timeout = 10000
-) {
+function waitForDOMElement(selector, callback, options = {}) {
+  const { interval = 100, timeout = 10000 } = options; // Destructure with defaults
   if (checkIfShortsPage()) {
     const startTime = Date.now();
     const checkElement = () => {
@@ -350,8 +347,10 @@ function SkippingShorts() {
             }
           );
         },
-        100,
-        10000
+        {
+          interval: 100,
+          timeout: 10000,
+        } // Pass options as an object
       );
     }
 
@@ -400,99 +399,115 @@ function SkippingShorts() {
     );
   }
 }
-
 function addToggleButton() {
   if (checkIfShortsPage()) {
     const windowHeight = window.innerHeight;
     let buttonPosition = 0;
     if (windowHeight <= 555) {
-      buttonPosition = 160;
+      buttonPosition = 165;
     } else if (windowHeight >= 900) {
-      buttonPosition = 365;
+      buttonPosition = 313;
     } else {
-      buttonPosition = 160 + ((windowHeight - 555) / (900 - 555)) * (365 - 160);
+      buttonPosition = 165 + ((windowHeight - 555) / (900 - 555)) * (313 - 165);
     }
-    const toggleStyles = document.createElement('style');
-    toggleStyles.textContent = `
-    :root {
-      --dark-bg: rgba(100,100,100, 0.5);
-      --dark-bg-hover: rgba(150, 150, 150, 0.5);
-      --light-bg: rgba(200, 200, 200, 0.5);
-      --light-bg-hover: rgba(150, 150, 150, 0.5);
-    }
-
-    .skip-toggle-btn {
-      position: fixed;
-      top: ${buttonPosition}px;
-      right: 25px;
-      width: 55px;
-      height: 55px;
-      padding: 0;
-      border: 1px solid red;
-      border-radius: 50%;
-      background-color: var(--light-bg);
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-      z-index: 1000;
-      opacity: 1;
-    }
-    .skip-toggle-btn:hover {
-      background-color: var(--light-bg-hover);
-    }
-    @media (prefers-color-scheme: dark) {
-      .skip-toggle-btn {
-        background-color: var(--dark-bg);
-      }
-      .skip-toggle-btn:hover {
-        background-color: var(--dark-bg-hover);
-      }
-    }
-    .toggle-icon {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-      width: 100%;
-      font-size: 20px;
-      color: #c00;
-    }
-  `;
-    document.head.appendChild(toggleStyles);
-
-    const toggleButton = document.createElement('button');
-    toggleButton.id = 'shorts-skip-toggle';
-    toggleButton.className = 'skip-toggle-btn';
-    toggleButton.title = 'Toggle Video Skipping (ON = Skip, OFF = No Skip)';
-
-    const icon = document.createElement('span');
-    icon.className = 'toggle-icon';
-    icon.textContent = 'ON';
-    toggleButton.appendChild(icon);
-
-    document.body.appendChild(toggleButton);
-
-    toggleButton.addEventListener('click', () => {
-      isSkippingEnabled = !isSkippingEnabled;
-      icon.textContent = isSkippingEnabled ? 'ON' : 'OFF';
-
-      if (isSkippingEnabled) {
-        const progressBarElement = document.querySelector(
-          '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
-        );
-        const navigationButtonDown = document.querySelector(
-          '#navigation-button-down > ytd-button-renderer > yt-button-shape > button'
-        );
-
-        if (progressBarElement && navigationButtonDown) {
-          observer.observe(progressBarElement, {
-            attributes: true,
-            attributeFilter: ['aria-valuetext'],
-          });
+let toggleButton = document.getElementById('shorts-skip-toggle');
+    if (!toggleButton) {
+      // Create styles only once
+      const toggleStyles = document.createElement('style');
+      toggleStyles.id = 'toggleStyles';
+      toggleStyles.textContent = `
+        :root {
+          --dark-bg: rgba(100,100,100, 0.5);
+          --dark-bg-hover: rgba(150, 150, 150, 0.5);
+          --light-bg: rgba(200, 200, 200, 0.5);
+          --light-bg-hover: rgba(150, 150, 150, 0.5);
         }
-      } else if (!isSkippingEnabled && observer) {
-        observer.disconnect();
-      }
-    });
+
+        .skip-toggle-btn {
+          display: flex;
+          pointer-events: all;
+          position: absolute; 
+          top: ${buttonPosition}px;
+          right: 25px;
+          width: 55px;
+          height: 55px;
+          padding: 0;
+          border: 1px solid red;
+          border-radius: 50%;
+          background-color: var(--light-bg);
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          z-index: 1000;
+          opacity: 1;
+        }
+        .skip-toggle-btn:hover {
+          background-color: var(--light-bg-hover);
+        }
+        @media (prefers-color-scheme: dark) {
+          .skip-toggle-btn {
+            background-color: var(--dark-bg);
+          }
+          .skip-toggle-btn:hover {
+            background-color: var(--dark-bg-hover);
+          }
+        }
+        .toggle-icon {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+          width: 100%;
+          font-size: 20px;
+          color: #c00;
+        }
+      `;
+      document.head.appendChild(toggleStyles);
+
+      // Create the button
+      toggleButton = document.createElement('button');
+      toggleButton.id = 'shorts-skip-toggle';
+      toggleButton.className = 'skip-toggle-btn';
+      toggleButton.title = 'Toggle Video Skipping (ON = Skip, OFF = No Skip)';
+
+      const icon = document.createElement('span');
+      icon.className = 'toggle-icon';
+      icon.textContent = 'ON';
+      toggleButton.appendChild(icon);
+
+      waitForDOMElement(
+        '.navigation-container.style-scope.ytd-shorts',
+        (navigationContainer) => {
+          waitForDOMElement(
+            '#navigation-button-up',
+            (navigationButtonUp) => {
+              navigationContainer.insertBefore(toggleButton, navigationButtonUp);
+            },
+            { interval: 100, timeout: 10000 }
+          );
+        },
+        { interval: 100, timeout: 10000 }
+      );
+
+      toggleButton.addEventListener('click', () => {
+        isSkippingEnabled = !isSkippingEnabled;
+        icon.textContent = isSkippingEnabled ? 'ON' : 'OFF';
+
+        if (isSkippingEnabled) {
+          const progressBarElement = document.querySelector(
+            '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
+          );
+
+          if (progressBarElement) {
+            observer.observe(progressBarElement, {
+              attributes: true,
+              attributeFilter: ['aria-valuetext'],
+            });
+          }
+        } else if (!isSkippingEnabled && observer) {
+          observer.disconnect();
+        }
+      });
+    } 
   }
 }
 
@@ -527,15 +542,18 @@ function updateScrollToTopButtonVisibility() {
   }
 }
 function removeToggleButton() {
+  const toggleButton = document.getElementById('shorts-skip-toggle');
   if (toggleButton && toggleButton.parentNode) {
     toggleButton.parentNode.removeChild(toggleButton);
-    toggleButton = null; // Clear the reference
+  }
+  const toggleStyles = document.getElementById('toggleStyles');
+  if (toggleStyles && toggleStyles.parentNode) {
+    toggleStyles.parentNode.removeChild(toggleStyles);
   }
 }
 
 function checkUrlChange() {
   const currentUrl = window.location.href;
-  let lastUrl = null;
   if (currentUrl !== lastUrl) {
     lastUrl = currentUrl;
     if (!currentUrl.includes('youtube.com/shorts')) {
@@ -544,6 +562,7 @@ function checkUrlChange() {
         observer.disconnect(); // Optional: Stop observer when leaving Shorts
       }
     } else {
+      console.log('The Shorts Script is working');
       SkippingShorts();
       addToggleButton();
     }
