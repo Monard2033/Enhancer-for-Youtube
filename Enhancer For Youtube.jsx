@@ -6,10 +6,11 @@ var viewportWidth = window.innerWidth;
 let observer = null;
 let isClicked = true;
 let lastUrl = null;
-let toggleButton = null; // Store the toggle button reference
-let isSkippingEnabled = true; // Toggle state
+let toggleButton = null;
+let isSkippingEnabled = true;
 let isRestartScheduled = false;
 let hasNavigationButtonBeenFetched = false;
+
 const scrollToTopBtn = document.createElement('button');
 const svgElement = document.createElementNS(
   'http://www.w3.org/2000/svg',
@@ -123,10 +124,6 @@ function updatePlayerPosition() {
     } else {
       maxWidthValue = 1850;
     }
-    primaryElement.style.maxWidth = '1650px';
-    primaryElement.style.marginTop = '12px';
-    primaryElement.style.marginLeft = '0px';
-    columnsElement.style.maxWidth = maxWidthValue + 'px';
   }
 
   var cssRules = `
@@ -179,6 +176,14 @@ function updatePlayerPosition() {
       margin: 0 10% !important;
       border: 1px solid red !important;
       backdrop-filter: brightness(0.6) !important;
+    } 
+    #primary.ytd-watch-flexy { 
+    max-width: ${maxWidthValue}px !important;
+    margin-left: 0px !important;
+    margin-top: 12px !important;
+    }
+    #columns.ytd-watch-flexy {
+    max-width: ${maxWidthValue}px !important;
     }
 
     ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
@@ -401,65 +406,69 @@ function SkippingShorts() {
 }
 function addToggleButton() {
   if (checkIfShortsPage()) {
+    console.log('ToggleButton Fun in Working');
     const windowHeight = window.innerHeight;
     let buttonPosition = 0;
-    if (windowHeight <= 555) {
-      buttonPosition = 165;
+    if (windowHeight <= 575) {
+      buttonPosition = 123;
     } else if (windowHeight >= 900) {
-      buttonPosition = 313;
+      buttonPosition = 310;
     } else {
-      buttonPosition = 165 + ((windowHeight - 555) / (900 - 555)) * (313 - 165);
+      buttonPosition =
+        123 + ((windowHeight - 575) / (900 - 575)) * (310 - 1123);
     }
-let toggleButton = document.getElementById('shorts-skip-toggle');
+    let toggleButton = document.getElementById('shorts-skip-toggle');
     if (!toggleButton) {
       // Create styles only once
       const toggleStyles = document.createElement('style');
       toggleStyles.id = 'toggleStyles';
       toggleStyles.textContent = `
-        :root {
-          --dark-bg: rgba(100,100,100, 0.5);
-          --dark-bg-hover: rgba(150, 150, 150, 0.5);
-          --light-bg: rgba(200, 200, 200, 0.5);
-          --light-bg-hover: rgba(150, 150, 150, 0.5);
-        }
+      :root {
+        --dark-bg: rgba(65, 65, 65, 0.5);
+        --dark-bg-hover: rgba(150, 150, 150, 0.5);
+        --light-bg: rgba(235, 235, 235, 0.8);
+        --light-bg-hover: rgba(150, 150, 150, 0.5);
+      }
 
+      .skip-toggle-btn {
+        pointer-events: all;
+        right: 25px;
+        width: 55px;
+        height: 55px;
+        border: none;
+        border-radius: 50%;
+        background-color: var(--light-bg);
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        z-index: 1000;
+        opacity: 1;
+        font-size: 16px;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
+          'Lucida Sans Unicode', Geneva, Verdana, serif;
+        color: #c00;
+      }
+      .skip-toggle-btn:hover {
+        background-color: var(--light-bg-hover);
+      }
+      @media (prefers-color-scheme: dark) {
         .skip-toggle-btn {
-          display: flex;
-          pointer-events: all;
-          position: absolute; 
-          top: ${buttonPosition}px;
-          right: 25px;
-          width: 55px;
-          height: 55px;
-          padding: 0;
-          border: 1px solid red;
-          border-radius: 50%;
-          background-color: var(--light-bg);
-          cursor: pointer;
-          transition: background-color 0.2s ease;
-          z-index: 1000;
-          opacity: 1;
+          background-color: var(--dark-bg);
         }
         .skip-toggle-btn:hover {
-          background-color: var(--light-bg-hover);
+          background-color: var(--dark-bg-hover);
         }
-        @media (prefers-color-scheme: dark) {
-          .skip-toggle-btn {
-            background-color: var(--dark-bg);
-          }
-          .skip-toggle-btn:hover {
-            background-color: var(--dark-bg-hover);
-          }
-        }
-        .toggle-icon {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100%;
-          width: 100%;
-          font-size: 20px;
-          color: #c00;
-        }
+      }
+      .toggle-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        color: #c02;
+        font-weight: 600;
+      }
       `;
       document.head.appendChild(toggleStyles);
 
@@ -471,16 +480,19 @@ let toggleButton = document.getElementById('shorts-skip-toggle');
 
       const icon = document.createElement('span');
       icon.className = 'toggle-icon';
-      icon.textContent = 'ON';
+      icon.textContent = 'SKIP';
       toggleButton.appendChild(icon);
 
       waitForDOMElement(
         '.navigation-container.style-scope.ytd-shorts',
-        (navigationContainer) => {
+        navigationContainer => {
           waitForDOMElement(
             '#navigation-button-up',
-            (navigationButtonUp) => {
-              navigationContainer.insertBefore(toggleButton, navigationButtonUp);
+            navigationButtonUp => {
+              navigationContainer.insertBefore(
+                toggleButton,
+                navigationButtonUp
+              );
             },
             { interval: 100, timeout: 10000 }
           );
@@ -490,7 +502,7 @@ let toggleButton = document.getElementById('shorts-skip-toggle');
 
       toggleButton.addEventListener('click', () => {
         isSkippingEnabled = !isSkippingEnabled;
-        icon.textContent = isSkippingEnabled ? 'ON' : 'OFF';
+        icon.textContent = isSkippingEnabled ? 'SKIP' : 'NO SKIP';
 
         if (isSkippingEnabled) {
           const progressBarElement = document.querySelector(
@@ -507,7 +519,7 @@ let toggleButton = document.getElementById('shorts-skip-toggle');
           observer.disconnect();
         }
       });
-    } 
+    }
   }
 }
 
@@ -544,6 +556,7 @@ function updateScrollToTopButtonVisibility() {
 function removeToggleButton() {
   const toggleButton = document.getElementById('shorts-skip-toggle');
   if (toggleButton && toggleButton.parentNode) {
+    toggleButton.dispatchEvent(new Event('remove'));
     toggleButton.parentNode.removeChild(toggleButton);
   }
   const toggleStyles = document.getElementById('toggleStyles');
