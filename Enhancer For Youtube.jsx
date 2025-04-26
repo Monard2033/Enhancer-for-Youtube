@@ -127,6 +127,16 @@ function updatePlayerPosition() {
   }
 
   var cssRules = `
+    :root {
+      --dark-fl: brightness(0.6) !important;
+      --dark-fl-hover: brightness(0.6) !important;
+      --light-fl: brightness(0.8) !important;
+      --light-fl-hover: brightness(0.6) !important;
+      --dark-bt: rgba(65, 65, 65, 0.5);
+      --dark-bt-hover: rgba(150, 150, 150, 1);
+      --light-bt: rgba(242, 242, 242);
+      --light-bt-hover: rgba(217,217,217);
+    } 
     #start.ytd-masthead {
       height: 50px !important;
       border-radius: 30px !important;
@@ -134,14 +144,12 @@ function updatePlayerPosition() {
       position: static !important;
       margin: 0 10% !important;
       border: 1px solid red !important;
-      backdrop-filter: brightness(0.6) !important;
+      backdrop-filter: var(--light-fl) !important;
     }
-
     .ytSearchboxComponentHost {
       height: 53px !important;
       margin: 0 12px 0 0 !important;
     }
-
     .ytSearchboxComponentInputBox {
       margin-left: 0 !important;
       margin-top: 0 !important;
@@ -149,25 +157,22 @@ function updatePlayerPosition() {
       box-shadow: none !important;
       height: 50px !important;
       background: transparent !important;
-      backdrop-filter: brightness(0.6) !important;
+      backdrop-filter: var(--light-fl) !important;
       display: flex !important;
       justify-content: space-around !important;
     }
-
     #center.ytd-masthead {
       margin: auto !important;
     }
-
     #container.ytd-searchbox {
       margin-left: 0 !important;
       border: 1px solid red !important;
       box-shadow: none !important;
       background: transparent !important;
-      backdrop-filter: brightness(0.6) !important;
+      backdrop-filter: var(--light-fl) !important;
       display: flex !important;
       justify-content: space-around !important;
     }
-
     #end.ytd-masthead {
       height: 50px !important;
       min-width: 10px !important;
@@ -175,81 +180,67 @@ function updatePlayerPosition() {
       position: relative !important;
       margin: 0 10% !important;
       border: 1px solid red !important;
-      backdrop-filter: brightness(0.6) !important;
+      backdrop-filter: var(--light-fl) !important;
     } 
     #primary.ytd-watch-flexy { 
-    max-width: ${maxWidthValue}px !important;
-    margin-left: 0px !important;
-    margin-top: 12px !important;
+      max-width: ${maxWidthValue}px !important;
+      margin-left: 0px !important;
+      margin-top: 12px !important;
     }
     #columns.ytd-watch-flexy {
-    max-width: ${maxWidthValue}px !important;
+     max-width: ${maxWidthValue}px !important;
     }
-
     ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
       min-width: 450px !important;
       padding-right: 0px !important;
     }
-
     .ytSearchboxComponentSearchButton {
       background: transparent !important;
       border: 1px solid red !important;
-      backdrop-filter: brightness(0.6) !important;
+      backdrop-filter: var(--light-fl) !important;
       height: 52px !important;
     }
-
     .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
-      backdrop-filter: brightness(0.6) !important;
+      backdrop-filter: var(--light-fl) !important;
       color: white !important;
     }
-
     #background.ytd-masthead {
       position: fixed !important;
       opacity: 0 !important;
       visibility: visible !important;
       --light-theme-text-color: invert !important;
     }
-
     #search-form.ytd-searchbox {
       height: 50px !important;
     }
-
     ytd-searchbox.ytd-masthead {
       margin: 0 !important;
       padding: 0 10px !important;
     }
-
     #sections.ytd-guide-renderer {
       position: relative !important;
     }
-
     #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child {
       padding: 0px !important;
     }
-
     #voice-search-button.ytd-masthead {
       margin-left: 0 !important;
       border: 1px solid red !important;
       background: transparent !important;
-      backdrop-filter: brightness(0.6) !important;
+      backdrop-filter: var(--light-fl) !important;
     }
-
     #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
       display: none !important;
     }
-
     .yt-spec-touch-feedback-shape__fill {
       background-color: black !important;
     }
-
     .yt-spec-icon-shape {
       color: #c00 !important;
     }
-
     ytd-feed-filter-chip-bar-renderer {
       height: 0 !important;
     }
-
     body.efyt-mini-player.efyt-mini-player-top-right #movie_player:not(.ytp-fullscreen) {
       height: 315px !important;
       border-radius: 14px !important;
@@ -258,12 +249,41 @@ function updatePlayerPosition() {
       left: ${position}px !important;
       z-index: 100 !important;
     }
-
     body._top-right #efyt-close-mini-player {
       top: 60px !important;
       left: ${position}px !important;
       width: 3% !important;
       height: 3% !important;
+    }  
+    @media (prefers-color-scheme: dark) {
+      #start.ytd-masthead {
+        backdrop-filter: var(--dark-fl) !important;}
+        #start.ytd-masthead:hover {
+        backdrop-filter: var(--dark-fl-hover) !important;}
+      .ytSearchboxComponentInputBox {
+        backdrop-filter: var(--dark-fl) !important;}
+        .ytSearchboxComponentInputBox:hover {
+        backdrop-filter: var(--dark-fl-hover) !important;}
+      #container.ytd-searchbox {
+        backdrop-filter: var(--dark-fl) !important;}
+        #container.ytd-searchbox:hover {
+        backdrop-filter: var(--dark-fl-hover) !important;}
+      #end.ytd-masthead {
+        backdrop-filter: var(--dark-fl) !important;}
+        #end.ytd-masthead:hover {
+        backdrop-filter: var(--dark-fl-hover) !important;}
+      .ytSearchboxComponentSearchButton {
+        backdrop-filter: var(--dark-fl) !important;}
+        .ytSearchboxComponentSearchButton:hover {
+        backdrop-filter: var(--dark-fl-hover) !important;}
+      .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
+        backdrop-filter: var(--dark-fl) !important;}
+        .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover {
+        backdrop-filter: var(--dark-fl-hover) !important;}
+      #voice-search-button.ytd-masthead {
+        backdrop-filter: var(--dark-fl) !important;}
+        #voice-search-button.ytd-masthead:hover {
+        backdrop-filter: var(--dark-fl-hover) !important;}
     }
   `;
   styleElement.textContent = cssRules;
@@ -423,21 +443,14 @@ function addToggleButton() {
       const toggleStyles = document.createElement('style');
       toggleStyles.id = 'toggleStyles';
       toggleStyles.textContent = `
-      :root {
-        --dark-bg: rgba(65, 65, 65, 0.5);
-        --dark-bg-hover: rgba(150, 150, 150, 0.5);
-        --light-bg: rgba(235, 235, 235, 0.8);
-        --light-bg-hover: rgba(150, 150, 150, 0.5);
-      }
-
       .skip-toggle-btn {
+        position: relative;
         pointer-events: all;
-        right: 25px;
-        width: 55px;
-        height: 55px;
-        border: none;
+        width: 100%;
+        height: 100%;
+        margin: none;
         border-radius: 50%;
-        background-color: var(--light-bg);
+        background-color: var(--light-bt);
         cursor: pointer;
         transition: background-color 0.2s ease;
         z-index: 1000;
@@ -447,14 +460,14 @@ function addToggleButton() {
         align-items: center;
       }
       .skip-toggle-btn:hover {
-        background-color: var(--light-bg-hover);
+        background-color: var(--light-bt-hover);
       }
       @media (prefers-color-scheme: dark) {
         .skip-toggle-btn {
-          background-color: var(--dark-bg);
+          background-color: var(--dark-bt);
         }
         .skip-toggle-btn:hover {
-          background-color: var(--dark-bg-hover);
+          background-color: var(--dark-bt-hover);
         }
       }
       .toggle-icon {
@@ -477,9 +490,15 @@ function addToggleButton() {
         }
       `;
       document.head.appendChild(toggleStyles);
+      // Create the container div
+      const autoskipContainer = document.createElement('div');
+      autoskipContainer.id = 'shorts autoskip';
+      autoskipContainer.className = 'navigation-button style-scope ytd-shorts';
+      autoskipContainer.style.width = '58px';
+      autoskipContainer.style.height = '58px';
 
       // Create the button
-      toggleButton = document.createElement('button');
+      const toggleButton = document.createElement('button');
       toggleButton.id = 'shorts-skip-toggle';
       toggleButton.className = 'skip-toggle-btn';
       toggleButton.title = 'Toggle Video Skipping (ON = Skip, OFF = No Skip)';
@@ -489,6 +508,9 @@ function addToggleButton() {
       icon.textContent = 'SKIP';
       toggleButton.appendChild(icon);
 
+      // Append button to container
+      autoskipContainer.appendChild(toggleButton);
+
       waitForDOMElement(
         '.navigation-container.style-scope.ytd-shorts',
         navigationContainer => {
@@ -496,7 +518,7 @@ function addToggleButton() {
             '#navigation-button-up',
             navigationButtonUp => {
               navigationContainer.insertBefore(
-                toggleButton,
+                autoskipContainer,
                 navigationButtonUp
               );
             },
