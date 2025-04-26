@@ -132,8 +132,8 @@ function updatePlayerPosition() {
       --dark-fl-hover: brightness(0.6) !important;
       --light-fl: brightness(0.8) !important;
       --light-fl-hover: brightness(0.6) !important;
-      --dark-bt: rgba(65, 65, 65, 0.5);
-      --dark-bt-hover: rgba(150, 150, 150, 1);
+      --dark-bt: rgba(39, 39, 39);
+      --dark-bt-hover: rgba(82, 82, 82);
       --light-bt: rgba(242, 242, 242);
       --light-bt-hover: rgba(217,217,217);
     } 
@@ -444,7 +444,6 @@ function addToggleButton() {
       toggleStyles.id = 'toggleStyles';
       toggleStyles.textContent = `
       .skip-toggle-btn {
-        position: relative;
         pointer-events: all;
         width: 100%;
         height: 100%;
@@ -492,8 +491,8 @@ function addToggleButton() {
       document.head.appendChild(toggleStyles);
       // Create the container div
       const autoskipContainer = document.createElement('div');
-      autoskipContainer.id = 'shorts autoskip';
       autoskipContainer.className = 'navigation-button style-scope ytd-shorts';
+      autoskipContainer.id = 'shorts autoskip';
       autoskipContainer.style.width = '58px';
       autoskipContainer.style.height = '58px';
 
@@ -511,22 +510,19 @@ function addToggleButton() {
       // Append button to container
       autoskipContainer.appendChild(toggleButton);
 
-      waitForDOMElement(
-        '.navigation-container.style-scope.ytd-shorts',
-        navigationContainer => {
-          waitForDOMElement(
-            '#navigation-button-up',
-            navigationButtonUp => {
-              navigationContainer.insertBefore(
-                autoskipContainer,
-                navigationButtonUp
-              );
-            },
-            { interval: 100, timeout: 10000 }
-          );
-        },
-        { interval: 100, timeout: 10000 }
-      );
+    waitForDOMElement(
+  '.navigation-container.style-scope.ytd-shorts',
+  (navigationContainer) => {
+    waitForDOMElement(
+      '#navigation-button-up',
+      (navigationButtonUp) => {
+        navigationContainer.insertBefore(autoskipContainer, navigationButtonUp);
+      },
+      { interval: 100, timeout: 10000 }
+    );
+  },
+  { interval: 100, timeout: 10000 }
+);
 
       toggleButton.addEventListener('click', () => {
         isSkippingEnabled = !isSkippingEnabled;
