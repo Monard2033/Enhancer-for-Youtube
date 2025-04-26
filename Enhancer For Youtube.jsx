@@ -442,12 +442,8 @@ function addToggleButton() {
         transition: background-color 0.2s ease;
         z-index: 1000;
         opacity: 1;
-        font-size: 16px;
         justify-content: center;
         align-items: center;
-        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
-          'Lucida Sans Unicode', Geneva, Verdana, serif;
-        color: #c00;
       }
       .skip-toggle-btn:hover {
         background-color: var(--light-bg-hover);
@@ -467,6 +463,9 @@ function addToggleButton() {
         height: 100%;
         width: 100%;
         color: #c02;
+        font-size: 14px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
+          'Lucida Sans Unicode', Geneva, Verdana, serif;
         font-weight: 600;
       }
       `;
