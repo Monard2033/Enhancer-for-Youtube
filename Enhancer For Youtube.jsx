@@ -442,6 +442,7 @@ function addToggleButton() {
         transition: background-color 0.2s ease;
         z-index: 1000;
         opacity: 1;
+        border: 1px solid red;
         justify-content: center;
         align-items: center;
       }
@@ -463,11 +464,17 @@ function addToggleButton() {
         height: 100%;
         width: 100%;
         color: #c02;
-        font-size: 14px;
+        font-size: 13px;
         font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
           'Lucida Sans Unicode', Geneva, Verdana, serif;
         font-weight: 600;
-      }
+        }
+      #navigation-button-up > ytd-button-renderer {
+        border: 1px solid red;
+        }
+      #navigation-button-down > ytd-button-renderer {
+        border: 1px solid red;
+        }
       `;
       document.head.appendChild(toggleStyles);
 
