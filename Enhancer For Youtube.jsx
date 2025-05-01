@@ -1,8 +1,6 @@
-// Variable Declarations
 var styleElement = document.createElement('style');
 let buttonPosition;
 let position;
-var viewportWidth = window.innerWidth;
 let observer = null;
 let isClicked = true;
 let lastUrl = null;
@@ -11,99 +9,106 @@ let isSkippingEnabled = true;
 let isRestartScheduled = false;
 let hasNavigationButtonBeenFetched = false;
 
-const scrollToTopBtn = document.createElement('button');
-const svgElement = document.createElementNS(
-  'http://www.w3.org/2000/svg',
-  'svg'
-);
-const pathElement = document.createElementNS(
-  'http://www.w3.org/2000/svg',
-  'path'
-);
-const divElement = document.createElement('div');
-const scrollTopBtnStyles = document.createElement('style');
-
-// Conditional Logic for Button Position
-if (window.screen.width === 2560 && window.screen.height === 1440) {
-  buttonPosition = viewportWidth * 0.73;
-} else {
-  buttonPosition = viewportWidth * 0.7 - 30;
-}
-
-// DOM Manipulations
-scrollToTopBtn.id = 'scroll-to-top';
-scrollToTopBtn.classList.add('scroll-top-btn');
-scrollToTopBtn.setAttribute('aria-label', 'Scroll to Top');
-
-svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-svgElement.setAttribute('height', '24');
-svgElement.setAttribute('viewBox', '0 0 24 24');
-svgElement.setAttribute('width', '24');
-svgElement.setAttribute('focusable', 'false');
-svgElement.style.fill = 'red';
-svgElement.style.display = 'flex';
-
-pathElement.setAttribute(
-  'd',
-  'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z'
-);
-
-svgElement.appendChild(pathElement);
-
-divElement.classList.add('scroll-up-btn');
-divElement.appendChild(svgElement);
-
-scrollToTopBtn.appendChild(divElement);
-
-scrollTopBtnStyles.textContent = `
-  :root {
-    --dark-bg: rgba(100,100,100, 0.5); /* 50% dark circle for light theme */
-    --dark-bg-hover: rgba(150, 150, 150, 0.5); /* 80% dark circle for light theme hover */
-    --light-bg: rgba(200, 200, 200, 0.5); /* 50% light circle for dark theme */
-    --light-bg-hover: rgba(150, 150, 150, 0.5); /* 80% light circle for dark theme hover */
+function createScrollToTopButton() {
+  const existingButton = document.getElementById('scroll-to-top');
+  if (existingButton) {
+    existingButton.remove();
+  }
+  
+  // Remove existing styles if present
+  const existingStyles = document.querySelector('style[data-scroll-top-styles]');
+  if (existingStyles) {
+    existingStyles.remove();
   }
 
-  /* Light theme */
-  .scroll-top-btn {
-    position: fixed;
-    opacity: 0;
-    bottom: 20px;
-    left: ${buttonPosition}px;
-    width: 55px;
-    height: 55px;
-    border: 1px solid red;
-    padding: 0;
-    border-radius: 50%;
-    background-color: var(--light-bg);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+  const scrollToTopBtn = document.createElement('button');
+  const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const divElement = document.createElement('div');
+  const scrollTopBtnStyles = document.createElement('style');
+  
+  scrollToTopBtn.id = 'scroll-to-top';
+  scrollToTopBtn.classList.add('scroll-top-btn');
+  scrollToTopBtn.setAttribute('aria-label', 'Scroll to Top');
+
+  svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svgElement.setAttribute('height', '24');
+  svgElement.setAttribute('viewBox', '0 0 24 24');
+  svgElement.setAttribute('width', '24');
+  svgElement.setAttribute('focusable', 'false');
+  svgElement.style.fill = 'red';
+  svgElement.style.display = 'flex';
+
+  pathElement.setAttribute(
+    'd',
+    'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z'
+  );
+
+  var viewportWidth = window.innerWidth;
+  if (window.screen.width === 2560 && window.screen.height === 1440) {
+    buttonPosition = viewportWidth * 0.73;
+  } else {
+    buttonPosition = viewportWidth * 0.7;
   }
-  .scroll-top-btn:hover {
-    background-color: var(--light-bg-hover);
-  }
-  /* Dark theme */
-  @media (prefers-color-scheme: dark) {
+
+  svgElement.appendChild(pathElement);
+  divElement.classList.add('scroll-up-btn');
+  divElement.appendChild(svgElement);
+  scrollToTopBtn.appendChild(divElement);
+
+  scrollTopBtnStyles.setAttribute('data-scroll-top-styles', 'true');
+  scrollTopBtnStyles.textContent = `
     .scroll-top-btn {
-      background-color: var(--dark-bg);
+      position: fixed;
+      opacity: 0;
+      bottom: 20px;
+      left: ${buttonPosition}px;
+      width: 55px;
+      height: 55px;
+      border: 1px solid red;
+      padding: 0;
+      border-radius: 50%;
+      background-color: var(--light-bt);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
     }
     .scroll-top-btn:hover {
-      background-color: var(--dark-bg-hover);
+      background-color: var(--light-bt-hover);
     }
+    @media (prefers-color-scheme: dark) {
+      .scroll-top-btn {
+        background-color: var(--dark-bt);
+      }
+      .scroll-top-btn:hover {
+        background-color: var(--dark-bt-hover);
+      }
+    }
+    .scroll-up-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+    }
+  `;
+  scrollToTopBtn.addEventListener('click', function () {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  });
+  const scrollPosition =
+    window.pageYOffset || document.documentElement.scrollTop;
+  if (scrollPosition > 1000 && checkIfWatchPage()) {
+    scrollToTopBtn.style.opacity = '1';
+  } else {
+    scrollToTopBtn.style.opacity = '0';
   }
-  .scroll-up-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-  }
-`;
+  document.head.appendChild(styleElement);
+  document.head.appendChild(scrollTopBtnStyles);
+  document.body.appendChild(scrollToTopBtn);
+}
 
-document.head.appendChild(styleElement);
-document.head.appendChild(scrollTopBtnStyles);
-document.body.appendChild(scrollToTopBtn);
-
-// Large Functions
 function updatePlayerPosition() {
   var primaryElement = document.querySelector('#primary');
   var columnsElement = document.querySelector('#columns');
@@ -120,12 +125,11 @@ function updatePlayerPosition() {
       }
     } else if (window.screen.width === 1920 && window.screen.height === 1080) {
       maxWidthValue = 1850;
-      position = viewportWidth * 0.45 - 30;
+      position = viewportWidth * 0.45 - 10;
     } else {
       maxWidthValue = 1850;
     }
   }
-
   var cssRules = `
     :root {
       --dark-fl: brightness(0.6) !important;
@@ -171,6 +175,7 @@ function updatePlayerPosition() {
       background: transparent !important;
       backdrop-filter: var(--light-fl) !important;
       display: flex !important;
+      opacity: 0 !important;
       justify-content: space-around !important;
     }
     #end.ytd-masthead {
@@ -225,7 +230,7 @@ function updatePlayerPosition() {
     }
     #voice-search-button.ytd-masthead {
       margin-left: 0 !important;
-      border: 1px solid red !important;
+      //border: 1px solid red !important;
       background: transparent !important;
       backdrop-filter: var(--light-fl) !important;
     }
@@ -247,7 +252,7 @@ function updatePlayerPosition() {
       width: 560px !important;
       top: 55px !important;
       left: ${position}px !important;
-      z-index: 100 !important;
+      z-index: 1000 !important;
     }
     body._top-right #efyt-close-mini-player {
       top: 60px !important;
@@ -255,6 +260,12 @@ function updatePlayerPosition() {
       width: 3% !important;
       height: 3% !important;
     }  
+    #frosted-glass.with-chipbar.ytd-app {
+     display: none;
+    }
+    .yt-spec-touch-feedback-shape {
+    border: 1px solid red;
+    }
     @media (prefers-color-scheme: dark) {
       #start.ytd-masthead {
         backdrop-filter: var(--dark-fl) !important;}
@@ -292,10 +303,16 @@ function updatePlayerPosition() {
 function adjustDynamicStyles() {
   const masthead = document.querySelector('#masthead-container.ytd-app');
   const center = document.querySelector('#center.ytd-masthead');
-
-  if (masthead && center) {
+  const container = document.querySelector('#container.ytd-masthead');
+  if (masthead && center && container) {
     const windowWidth = window.innerWidth;
+    var scrollY = window.scrollY;
     let mastheadWidth = 0;
+    if(scrollY > 50) {
+        container.style.opacity = `0.6`;
+    } else if(scrollY < 50 || scrollY === 0) {
+        container.style.opacity = `1`;
+    }
     if (windowWidth <= 658) {
       mastheadWidth = 0;
     } else if (windowWidth >= 1750) {
@@ -304,7 +321,6 @@ function adjustDynamicStyles() {
       mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100;
     }
     //masthead.style.width = `${mastheadWidth}%`;
-
     let centerFlexBasis = 0;
     if (windowWidth <= 658) {
       centerFlexBasis = 200;
@@ -567,16 +583,6 @@ function dispatchSpacebarEvent() {
   document.dispatchEvent(spacebarEvent);
 }
 
-function updateScrollToTopButtonVisibility() {
-  const scrollPosition =
-    window.pageYOffset || document.documentElement.scrollTop;
-  const scrollToTopBtn = document.getElementById('scroll-to-top');
-  if (scrollPosition > 1000 && checkIfWatchPage()) {
-    scrollToTopBtn.style.opacity = '1';
-  } else {
-    scrollToTopBtn.style.opacity = '0';
-  }
-}
 function removeToggleButton() {
   const toggleButton = document.getElementById('shorts-skip-toggle');
   if (toggleButton && toggleButton.parentNode) {
@@ -634,23 +640,19 @@ document.addEventListener('keydown', function (event) {
   }
 });
 
-document.getElementById('scroll-to-top').addEventListener('click', function () {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth',
-  });
-});
 
-window.addEventListener('popstate', updateScrollToTopButtonVisibility);
+window.addEventListener('popstate', createScrollToTopButton);
 window.addEventListener('popstate', addToggleButton);
 window.addEventListener('resize', adjustDynamicStyles);
 window.addEventListener('resize', updatePlayerPosition);
+window.addEventListener('resize', createScrollToTopButton);
 window.addEventListener('resize', addToggleButton);
 window.addEventListener('scroll', updatePlayerPosition);
-window.addEventListener('scroll', updateScrollToTopButtonVisibility);
+window.addEventListener('scroll', createScrollToTopButton);
+window.addEventListener('scroll', adjustDynamicStyles);
 window.addEventListener('DOMContentLoaded', checkUrlChange);
 
 updatePlayerPosition();
 adjustDynamicStyles();
-updateScrollToTopButtonVisibility();
 checkUrlChange();
+createScrollToTopButton();
