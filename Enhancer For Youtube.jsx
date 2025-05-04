@@ -406,7 +406,7 @@ function SkippingShorts() {
                         ) {
                             let ariaValueText =
                                 progressBarElement.getAttribute('aria-valuetext');
-                            let widthNumber = parseFloat(ariaValueText.replace('%',``));
+                            let widthNumber = parseFloat(ariaValueText.replace('%', ``));
                             if (widthNumber >= maxWidth) {
                                 maxWidth = widthNumber;
                             } else if (maxWidth >= 95 && widthNumber < maxWidth - 10 && !isClicked) {
@@ -623,6 +623,9 @@ document.addEventListener('keydown', function (event) {
 //Event Listeners
 window.addEventListener('load', updatePageElements);
 window.addEventListener('load', adjustTopBarElements);
+window.addEventListener('load', createScrollToTopButton);
+window.addEventListener('load', addToggleButton);
+window.addEventListener('popstate', updatePageElements);
 window.addEventListener('popstate', createScrollToTopButton);
 window.addEventListener('popstate', addToggleButton);
 window.addEventListener('resize', adjustTopBarElements);
