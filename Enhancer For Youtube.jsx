@@ -324,7 +324,7 @@ console.log('scrollTopContainer appended to body', scrollTopContainer); // Debug
   // Handle scroll visibility
   const handleScroll = () => {
       const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-      scrollTopContainer.style.opacity = scrollPosition > 1000 ? '1' : '0';
+      scrollTopContainer.style.opacity = (scrollPosition > 1000 && checkIfWatchPage()) ? '1' : '0';
   };
 
   window.addEventListener('scroll', handleScroll);
