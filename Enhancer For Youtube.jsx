@@ -4,6 +4,9 @@
     let isSkippingEnabled = true;
     let hasNavigationButtonBeenFetched = false;
     let navigationButtonDown = null;
+    let lastUrl = null;
+    let observer = null;
+    let isRestartScheduled = false;
 
     // Throttle utility
     function throttle(fn, delay) {
@@ -31,14 +34,14 @@
     document.head.appendChild(styleElement);
     styleElement.textContent = `
         :root {
-            --dark-fl: brightness(0.8);
-            --dark-fl-hover: brightness(0.9);
-            --light-fl: brightness(0.9);
-            --light-fl-hover: brightness(0.8);
-            --dark-bt: rgba(39, 39, 39 ,1);
-            --dark-bt-hover: rgba(82, 82, 82, 1);
-            --light-bt: rgba(242, 242, 242, 0.1);
-            --light-bt-hover: rgba(229, 229, 229, 1);
+            --dark-bt: brightness(0.8);
+            --dark-bt-hover: brightness(0.9);
+            --light-bt: brightness(0.9);
+            --light-bt-hover: brightness(0.8);
+            --dark-bt: rgba(48, 48, 48, 0.6);
+            --dark-bt-hover: rgba(63,63,63, 0.6);
+            --light-bt: rgba(235, 235, 235, 0.5);
+            --light-bt-hover: rgba(200, 200, 200, 0.5);
         }
         #start.ytd-masthead {
             height: 50px;
@@ -47,7 +50,7 @@
             position: static;
             margin: 0 10%;
             border: 1px solid red;
-            backdrop-filter: var(--light-fl);
+            backdrop-filter: var(--light-bt);
         }
         .ytSearchboxComponentHost {
             height: 53px;
@@ -60,7 +63,7 @@
             box-shadow: none;
             height: 50px;
             background: transparent;
-            backdrop-filter: var(--light-fl);
+            backdrop-filter: var(--light-bt);
             display: flex;
             justify-content: space-around;
         }
@@ -72,7 +75,7 @@
             border: 1px solid red;
             box-shadow: none;
             background: transparent;
-            backdrop-filter: var(--light-fl);
+            backdrop-filter: var(--light-bt);
             display: flex;
             opacity: 0;
             justify-content: space-around;
@@ -84,7 +87,7 @@
             position: relative;
             margin: 0 10%;
             border: 1px solid red;
-            backdrop-filter: var(--light-fl);
+            backdrop-filter: var(--light-bt);
         }
         ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
             min-width: 450px;
@@ -93,11 +96,11 @@
         .ytSearchboxComponentSearchButton {
             background: transparent;
             border: 1px solid red;
-            backdrop-filter: var(--light-fl);
+            backdrop-filter: var(--light-bt);
             height: 52px;
         }
         .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
-            backdrop-filter: var(--light-fl);
+            backdrop-filter: var(--light-bt);
             color: white;
         }
         #background.ytd-masthead {
@@ -121,7 +124,7 @@
         #voice-search-button.ytd-masthead {
             margin-left: 0;
             background: transparent;
-            backdrop-filter: var(--light-fl);
+            backdrop-filter: var(--light-bt);
         }
         #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
             display: none;
@@ -145,13 +148,13 @@
         #start.ytd-masthead, .ytSearchboxComponentInputBox, #container.ytd-searchbox, #end.ytd-masthead,
         .ytSearchboxComponentSearchButton, .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
         #voice-search-button.ytd-masthead {
-            backdrop-filter: var(--dark-fl) !important;
+            backdrop-filter: var(--dark-bt) !important;
             }
         #start.ytd-masthead:hover, .ytSearchboxComponentInputBox:hover, #container.ytd-searchbox:hover,
         #end.ytd-masthead:hover, .ytSearchboxComponentSearchButton:hover,
         .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
         #voice-search-button.ytd-masthead:hover {
-            backdrop-filter: var(--dark-fl-hover) !important;
+            backdrop-filter: var(--dark-bt-hover) !important;
             }
         }
         #scroll-top-container {
@@ -159,18 +162,16 @@
             bottom: 20px;
             width: 55px;
             height: 55px;
-            opacity: 0;
             transition: opacity 0.3s ease;
             z-index: 1000;
+            opacity: 0;
         }
         .scroll-top-btn {
             pointer-events: all;
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background-color: transparent;
             cursor: pointer;
-            opacity: 1;
             border: 1px solid red;
             display: flex;
             justify-content: center;
@@ -179,15 +180,13 @@
         }
         .scroll-top-btn:hover {
             background-color: var(--light-bt-hover);
-            transition: background-color 0.2s ease;
         }
         @media (prefers-color-scheme: dark) {
             .scroll-top-btn {
-                background-color: transparent;
                 background-color: var(--dark-bt);
             }
             .scroll-top-btn:hover {
-                border-color: var(--dark-bt-hover);
+                background-color: var(--dark-bt-hover);
             }
         }
         .scroll-up-btn {
@@ -301,7 +300,7 @@
             container.style.opacity = window.scrollY !== 0 ? '0.6' : '1';
             const centerFlexBasis = windowWidth <= 658 ? 200 :
                 windowWidth >= 1750 ? 550 :
-                200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200);
+                    200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200);
             center.style.flex = `0 0 ${centerFlexBasis}px`;
         }
 
@@ -347,35 +346,24 @@
             pageStyles.textContent = cssRules;
         }
     }
-
-    // Wait for DOM element using MutationObserver
+    // Original waitForDOMElement (restored)
     function waitForDOMElement(selector, callback, options = {}) {
-        const { timeout = 15000 } = options;
-        const element = document.querySelector(selector);
-        if (element) {
-            callback(element);
-            return;
+        const { interval = 100, timeout = 10000 } = options;
+        if (checkIfShortsPage()) {
+            const startTime = Date.now();
+            const checkElement = () => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    callback(element);
+                } else if (Date.now() - startTime < timeout) {
+                    setTimeout(checkElement, interval);
+                }
+            };
+            checkElement();
         }
-
-        const observer = new MutationObserver((mutations, obs) => {
-            const target = document.querySelector(selector);
-            if (target) {
-                obs.disconnect();
-                callback(target);
-            }
-        });
-
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-        });
-
-        setTimeout(() => observer.disconnect(), timeout);
     }
-
     // Restart observer
     function restartObserver() {
-        let isRestartScheduled = false;
         if (isRestartScheduled) return;
         isRestartScheduled = true;
         setTimeout(() => {
@@ -386,9 +374,8 @@
 
     // Handle skipping shorts (unchanged as per request)
     function SkippingShortsMechanism() {
-        if (checkIfShortsPage() && isClicked) {
+        if (checkIfShortsPage()) {
             isClicked = false;
-            let observer = null;
             if (!hasNavigationButtonBeenFetched) {
                 waitForDOMElement(
                     '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
@@ -411,7 +398,7 @@
                             }
                         );
                     },
-                    { timeout: 15000 }
+                    { interval: 100, timeout: 10000 }
                 );
             }
             waitForDOMElement(
@@ -431,10 +418,14 @@
                                 let ariaValueText =
                                     progressBarElement.getAttribute('aria-valuetext');
                                 let widthNumber = parseFloat(ariaValueText.replace('%', ''));
+                                console.log("Width Number: " + widthNumber);
                                 if (widthNumber >= maxWidth) {
                                     maxWidth = widthNumber;
                                 } else if (widthNumber < maxWidth - 10 && !isClicked) {
+                                    console.log("Width Number: " + widthNumber);
+                                    console.log("Spacebar event dispatched: " + new Date().getTime());
                                     dispatchSpacebarEvent();
+                                    console.log("Navigation Button Clicked: " + new Date().getTime());
                                     navigationButtonDown.click();
                                     isClicked = true;
                                     observer.disconnect();
@@ -449,7 +440,7 @@
                         attributeFilter: ['aria-valuetext'],
                     });
                 },
-                { timeout: 15000 }
+                { interval: 100, timeout: 10000 }
             );
         }
     }
@@ -485,10 +476,10 @@
                             (navigationButtonUp) => {
                                 navigationContainer.insertBefore(autoskipContainer, navigationButtonUp);
                             },
-                            { timeout: 15000 }
+                            { interval: 100, timeout: 10000 }
                         );
                     },
-                    { timeout: 15000 }
+                    { interval: 100, timeout: 10000 }
                 );
 
                 toggleButton.addEventListener('click', () => {
@@ -499,39 +490,14 @@
                         const progressBarElement = document.querySelector(
                             '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
                         );
-                        if (progressBarElement) {
-                            let observer = new MutationObserver(mutations => {
-                                mutations.forEach(mutation => {
-                                    if (
-                                        mutation.attributeName === 'aria-valuetext' &&
-                                        isSkippingEnabled
-                                    ) {
-                                        let ariaValueText =
-                                            progressBarElement.getAttribute('aria-valuetext');
-                                        let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                                        if (widthNumber >= maxWidth) {
-                                            maxWidth = widthNumber;
-                                        } else if (widthNumber < maxWidth - 10 && !isClicked) {
-                                            dispatchSpacebarEvent();
-                                            navigationButtonDown.click();
-                                            isClicked = true;
-                                            observer.disconnect();
-                                            restartObserver();
-                                            maxWidth = 0;
-                                        }
-                                    }
-                                });
-                            });
+                        if (progressBarElement && observer) {
                             observer.observe(progressBarElement, {
                                 attributes: true,
                                 attributeFilter: ['aria-valuetext'],
                             });
                         }
-                    } else {
-                        let observer = null;
-                        if (observer) {
-                            observer.disconnect();
-                        }
+                    } else if (!isSkippingEnabled && observer) {
+                        observer.disconnect();
                     }
                 });
             }
@@ -553,7 +519,7 @@
             code: 'Space',
             keyCode: 32,
             bubbles: true,
-            cancelable: true,
+            cancelable: false,
         });
         document.dispatchEvent(spacebarEvent);
     }
@@ -566,51 +532,24 @@
         }
     }
 
-    // URL change detection with MutationObserver fallback
-    function observeUrlChanges() {
-        let lastUrl = null;
-        const originalPushState = history.pushState;
-        history.pushState = function (...args) {
-            originalPushState.apply(this, args);
-            handleUrlChange();
-        };
 
-        const originalReplaceState = history.replaceState;
-        history.replaceState = function (...args) {
-            originalReplaceState.apply(this, args);
-            handleUrlChange();
-        };
-
-        window.addEventListener('popstate', handleUrlChange);
-
-        const urlObserver = new MutationObserver(() => {
-            handleUrlChange();
-        });
-        urlObserver.observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-        });
-
-        function handleUrlChange() {
-            const currentUrl = window.location.href;
-            if (currentUrl !== lastUrl) {
-                lastUrl = currentUrl;
-                if (currentUrl.includes('youtube.com/shorts')) {
-                    SkippingShortsMechanism();
-                    createShortsSkipBtn();
-                } else {
-                    removeToggleButton();
-                    let observer = null;
-                    if (observer) {
-                        observer.disconnect();
-                    }
+    // Original URL change detection (restored)
+    function checkUrlChange() {
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastUrl) {
+            lastUrl = currentUrl;
+            if (!currentUrl.includes('youtube.com/shorts')) {
+                removeToggleButton();
+                if (observer) {
+                    observer.disconnect();
                 }
+            } else {
+                SkippingShortsMechanism();
+                createShortsSkipBtn();
             }
         }
-
-        handleUrlChange();
+        setTimeout(checkUrlChange, 500);
     }
-
     // Event listeners with debouncing
     let lastWheelEvent = 0;
     let lastKeyEvent = 0;
@@ -620,7 +559,6 @@
         const now = Date.now();
         if (event.deltaY !== 0 && now - lastWheelEvent > debounceDelay) {
             lastWheelEvent = now;
-            let observer = null;
             if (observer) {
                 observer.disconnect();
             }
@@ -632,7 +570,6 @@
         const now = Date.now();
         if ((event.keyCode === 38 || event.keyCode === 40) && now - lastKeyEvent > debounceDelay) {
             lastKeyEvent = now;
-            let observer = null;
             if (observer) {
                 observer.disconnect();
             }
@@ -653,7 +590,6 @@
     window.addEventListener('load', () => {
         updateLayout();
         createScrollToTopBtn();
-        observeUrlChanges();
     });
 
     window.addEventListener('popstate', () => {
@@ -662,11 +598,10 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-        observeUrlChanges();
+        checkUrlChange();
     });
 
     // Initial calls
     updateLayout();
     createScrollToTopBtn();
-    observeUrlChanges();
 })();
