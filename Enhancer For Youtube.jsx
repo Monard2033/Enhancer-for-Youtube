@@ -50,7 +50,7 @@
             position: static;
             margin: 0 10%;
             border: 1px solid red;
-            backdrop-filter: var(--light-bt);
+            background-color: var(--light-bt);
         }
         .ytSearchboxComponentHost {
             height: 53px;
@@ -63,7 +63,7 @@
             box-shadow: none;
             height: 50px;
             background: transparent;
-            backdrop-filter: var(--light-bt);
+            background-color: var(--light-bt);
             display: flex;
             justify-content: space-around;
         }
@@ -75,7 +75,7 @@
             border: 1px solid red;
             box-shadow: none;
             background: transparent;
-            backdrop-filter: var(--light-bt);
+            background-color: var(--light-bt);
             display: flex;
             opacity: 0;
             justify-content: space-around;
@@ -87,7 +87,7 @@
             position: relative;
             margin: 0 10%;
             border: 1px solid red;
-            backdrop-filter: var(--light-bt);
+            background-color: var(--light-bt);
         }
         ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
             min-width: 450px;
@@ -96,11 +96,11 @@
         .ytSearchboxComponentSearchButton {
             background: transparent;
             border: 1px solid red;
-            backdrop-filter: var(--light-bt);
+            background-color: var(--light-bt);
             height: 52px;
         }
         .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
-            backdrop-filter: var(--light-bt);
+            background-color: var(--light-bt);
             color: white;
         }
         #background.ytd-masthead {
@@ -124,7 +124,7 @@
         #voice-search-button.ytd-masthead {
             margin-left: 0;
             background: transparent;
-            backdrop-filter: var(--light-bt);
+            background-color: var(--light-bt);
         }
         #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
             display: none;
@@ -148,13 +148,13 @@
         #start.ytd-masthead, .ytSearchboxComponentInputBox, #container.ytd-searchbox, #end.ytd-masthead,
         .ytSearchboxComponentSearchButton, .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
         #voice-search-button.ytd-masthead {
-            backdrop-filter: var(--dark-bt) !important;
+            background-color: var(--dark-bt) !important;
             }
         #start.ytd-masthead:hover, .ytSearchboxComponentInputBox:hover, #container.ytd-searchbox:hover,
         #end.ytd-masthead:hover, .ytSearchboxComponentSearchButton:hover,
         .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
         #voice-search-button.ytd-masthead:hover {
-            backdrop-filter: var(--dark-bt-hover) !important;
+            background-color: var(--dark-bt-hover) !important;
             }
         }
         #scroll-top-container {
