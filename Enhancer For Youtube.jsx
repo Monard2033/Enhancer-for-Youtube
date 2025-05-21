@@ -26,7 +26,7 @@
     :root {
         --dark-bt: rgb(200 200 200 / 15%);
         --dark-bt-hover: rgba(255 255 255 /25%);
-        --dark-bt-tp: rgb(0 0 0 / 5%);
+        --dark-bt-tp: rgb(200 200 200 / 0%);
         --light-bt: rgb(0 0 0 / 7%);
         --light-bt-hover: rgb(0 0 0 /15%);
     }
