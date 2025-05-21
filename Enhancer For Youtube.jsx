@@ -23,10 +23,10 @@
     const styleElement = document.createElement('style');
     document.head.appendChild(styleElement);
     styleElement.textContent = `
-    :root {
+        :root {
         --dark-bt: rgb(200 200 200 / 15%);
         --dark-bt-hover: rgba(255 255 255 /25%);
-        --dark-bt-tp: rgb(200 200 200 / 0%);
+        --dark-bt-tp: rgb(255 255 255/ 1%);
         --light-bt: rgb(0 0 0 / 7%);
         --light-bt-hover: rgb(0 0 0 /15%);
     }
@@ -142,6 +142,15 @@
         color: #c00 !important;
     }
 
+    .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled {
+        background: none !important;
+    }
+
+    yt-chip-cloud-chip-renderer[chip-style=STYLE_DEFAULT][selected] #chip-container.yt-chip-cloud-chip-renderer {
+        background-color: var(--yt-spec-badge-chip-background) !important;
+        color: var(--yt-spec-text-primary) !important;
+    }
+
     .yt-spec-touch-feedback-shape {
         border: 1px dotted red;
         background-color: var(--light-bt) !important;
@@ -166,15 +175,16 @@
             background-color: var(--dark-bt) !important;
         }
 
-        #content > yt-lockup-view-model > div > yt-touch-feedback-shape > div {
+        #content>yt-lockup-view-model>div>yt-touch-feedback-shape>div {
             background-color: var(--dark-bt-tp) !important;
             border: none !important;
         }
-        #contents > yt-lockup-view-model:nth-child(n) > div > yt-touch-feedback-shape > div {
+
+        #contents>yt-lockup-view-model:nth-child(n)>div>yt-touch-feedback-shape>div {
             background-color: var(--dark-bt-tp) !important;
             border: none !important;
         }
-        
+
         #start.ytd-masthead:hover,
         .ytSearchboxComponentInputBox:hover,
         #container.ytd-searchbox:hover,
@@ -187,7 +197,6 @@
         #voice-search-button.ytd-masthead:hover {
             background-color: var(--dark-bt-hover) !important;
         }
-         
     }
 
     #scroll-top-container {
@@ -464,6 +473,7 @@
             centerFlexBasis = Math.max(200, Math.min(550, centerFlexBasis));
             center.style.flex = `0 0 ${centerFlexBasis}px`;
         }
+
 
         if (primaryElement && columnsElement) {
             const viewportWidth = window.innerWidth;
