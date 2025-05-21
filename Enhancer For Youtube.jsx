@@ -24,12 +24,11 @@
     document.head.appendChild(styleElement);
     styleElement.textContent = `
     :root {
-        --dark-bt: rgba(37, 37, 37, 0.9);
-        --dark-bt-tp: rgba(0, 0, 0, 0.05);
-        --dark-bt-hover: rgba(85, 85, 85, 0.5);
-        --light-bt: rgb(209, 209, 209);
-        --light-bt-tp: rgba(255, 255, 255, 0.2);
-        --light-bt-hover: rgb(184, 184, 184);
+        --dark-bt: rgb(200 200 200 / 15%);
+        --dark-bt-hover: rgba(255 255 255 /25%);
+        --dark-bt-tp: rgb(0 0 0 / 5%);
+        --light-bt: rgb(0 0 0 / 7%);
+        --light-bt-hover: rgb(0 0 0 /15%);
     }
 
     #start.ytd-masthead {
@@ -121,7 +120,6 @@
     #voice-search-button.ytd-masthead {
         margin-left: 0;
         background: transparent;
-        background-color: var(--light-bt);
     }
 
     #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
@@ -162,15 +160,21 @@
         .scroll-top-btn,
         .skip-toggle-btn,
         .ytSearchboxComponentSearchButton,
+        .yt-spec-touch-feedback-shape,
         .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
         #voice-search-button.ytd-masthead {
             background-color: var(--dark-bt) !important;
         }
 
-        .yt-spec-touch-feedback-shape {
+        #content > yt-lockup-view-model > div > yt-touch-feedback-shape > div {
             background-color: var(--dark-bt-tp) !important;
+            border: none !important;
         }
-
+        #contents > yt-lockup-view-model:nth-child(n) > div > yt-touch-feedback-shape > div {
+            background-color: var(--dark-bt-tp) !important;
+            border: none !important;
+        }
+        
         #start.ytd-masthead:hover,
         .ytSearchboxComponentInputBox:hover,
         #container.ytd-searchbox:hover,
@@ -178,14 +182,12 @@
         .scroll-top-btn:hover,
         .skip-toggle-btn:hover,
         .ytSearchboxComponentSearchButton:hover,
+        .yt-spec-touch-feedback-shape:hover,
         .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
         #voice-search-button.ytd-masthead:hover {
             background-color: var(--dark-bt-hover) !important;
         }
-
-        .yt-spec-touch-feedback-shape:hover {
-            background-color: var(--dark-bt-tp) !important;
-        }
+         
     }
 
     #scroll-top-container {
@@ -239,6 +241,10 @@
         align-items: center;
     }
 
+    .skip-toggle-btn:hover {
+        background-color: var(--light-bt-hover);
+    }
+
     .toggle-icon {
         display: flex;
         justify-content: center;
@@ -259,8 +265,8 @@
         top: 0;
         height: 25px;
         transform: translateY(8px);
-        background-color: var(--dark-bt-hover);
-        color: #fff;
+        background-color: #707070;
+        color: #ffffff;
         padding: 6px 8px;
         border-radius: 4px;
         font-family: "Roboto", "Arial", sans-serif;
@@ -280,7 +286,6 @@
         visibility: visible;
     }
     `;
-
     // Create and position the scroll-to-top button
     function createScrollToTopBtn() {
         let scrollTopContainer = document.getElementById('scroll-top-container');
@@ -324,30 +329,123 @@
             scrollTopContainer.appendChild(scrollToTopBtn);
             document.body.appendChild(scrollTopContainer);
 
-            const viewportWidth = window.innerWidth;
-            let buttonPosition;
-            if (window.screen.width === 2560 && window.screen.height === 1440) {
-                // Linear interpolation for 2560x1440 case
-                buttonPosition = 0.904 * (viewportWidth - 1035) + 544;
-            } else {
-                // Linear interpolation for other resolutions
-                buttonPosition = 0.904 * (viewportWidth - 1035) + 544;
-            }
-            // Clamp buttonPosition between 90px and 854px
-            buttonPosition = Math.max(544, Math.min(1344, buttonPosition));
-            scrollTopContainer.style.left = `${buttonPosition}px`;
+            // Position the button
+            const updatePosition = () => {
+                const viewportWidth = window.innerWidth;
+                let buttonPosition;
+                if (window.screen.width === 2560 && window.screen.height === 1440) {
+                    buttonPosition = 0.904 * (viewportWidth - 1035) + 544;
+                } else {
+                    buttonPosition = 0.904 * (viewportWidth - 1035) + 544;
+                }
+                buttonPosition = Math.max(544, Math.min(1344, buttonPosition));
+                scrollTopContainer.style.left = `${buttonPosition}px`;
+            };
+            updatePosition();
 
-            const scrollPosition =
-                window.pageYOffset || document.documentElement.scrollTop;
-            scrollTopContainer.style.opacity =
-                scrollPosition > 1000 && checkIfWatchPage() ? '1' : '0';
-
+            // Add click event listener
             scrollToTopBtn.addEventListener('click', () => {
                 window.scrollTo({
                     top: 0,
                     behavior: 'smooth',
                 });
             });
+
+            // Update position on resize
+            window.addEventListener('resize', throttle(updatePosition, 30));
+        }
+
+        // Handle scroll visibility
+        const handleScrollVisibility = () => {
+            const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            scrollTopContainer.style.opacity = (scrollPosition > 1000 && checkIfWatchPage()) ? '1' : '0';
+        };
+
+        // Add scroll event listener (only once)
+        window.removeEventListener('scroll', handleScrollVisibility); // Prevent duplicates
+        window.addEventListener('scroll', handleScrollVisibility);
+
+        // Initial visibility check
+        handleScrollVisibility();
+    }
+
+    // Toggle button for YouTube Shorts
+    function createShortsSkipBtn() {
+        if (checkIfShortsPage()) {
+            let toggleButton = document.getElementById('shorts-skip-toggle');
+            if (!toggleButton) {
+                const autoskipContainer = document.createElement('div');
+                autoskipContainer.className =
+                    'navigation-button style-scope ytd-shorts';
+                autoskipContainer.id = 'shorts-autoskip';
+
+                toggleButton = document.createElement('button');
+                toggleButton.id = 'shorts-skip-toggle';
+                toggleButton.className = 'skip-toggle-btn';
+
+                // Create the touch feedback shape div
+                const touchFeedbackShape = document.createElement('div');
+                touchFeedbackShape.className = 'yt-spec-touch-feedback-shape';
+                toggleButton.appendChild(touchFeedbackShape);
+
+                const icon = document.createElement('span');
+                icon.className = 'toggle-icon';
+                icon.textContent = 'SKIP';
+                toggleButton.appendChild(icon);
+
+                // Create the tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'skip-tooltip';
+                tooltip.textContent = 'Toggle Video Skipping';
+                tooltip.setAttribute('role', 'tooltip');
+                tooltip.setAttribute('aria-label', 'Toggle Video Skipping');
+
+                // Append button and tooltip to container
+                autoskipContainer.appendChild(toggleButton);
+                autoskipContainer.appendChild(tooltip);
+
+                waitForDOMElement(
+                    '.navigation-container.style-scope.ytd-shorts',
+                    navigationContainer => {
+                        waitForDOMElement(
+                            '#navigation-button-up',
+                            navigationButtonUp => {
+                                navigationContainer.insertBefore(
+                                    autoskipContainer,
+                                    navigationButtonUp
+                                );
+                            },
+                            {
+                                interval: 100,
+                                timeout: 10000,
+                            }
+                        );
+                    },
+                    {
+                        interval: 100,
+                        timeout: 10000,
+                    }
+                );
+
+                toggleButton.addEventListener('click', () => {
+                    isSkippingEnabled = !isSkippingEnabled;
+                    icon.textContent = isSkippingEnabled ? 'SKIP' : 'NO SKIP';
+
+                    if (isSkippingEnabled) {
+                        const progressBarElement = document.querySelector(
+                            '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
+                        );
+                        if (progressBarElement && observer) {
+                            observer.observe(progressBarElement, {
+                                attributes: true,
+                                attributeFilter: ['aria-valuetext'],
+                            });
+                        }
+                    } else if (!isSkippingEnabled && observer) {
+                        observer.disconnect();
+                    }
+                });
+            }
         }
     }
 
@@ -383,27 +481,27 @@
             }
 
             const cssRules = `
-#primary.ytd-watch-flexy {
-max-width: ${maxWidthValue}px !important;
-margin-left: 0px !important;
-margin-top: 12px !important;
-}
-#columns.ytd-watch-flexy {
-max-width: ${maxWidthValue}px !important;
-}
-body.efyt-mini-player.efyt-mini-player-top-right #movie_player:not(.ytp-fullscreen) {
-height: 315px !important;
-border-radius: 14px !important;
-top: 55px !important;
-left: ${position}px !important;
-}
-body._top-right #efyt-close-mini-player {
-top: 60px !important;
-left: ${position}px !important;
-width: 3%;
-height: 3%;
-}
-`;
+            #primary.ytd-watch-flexy {
+                max-width: ${maxWidthValue}px !important;
+                margin-left: 0px !important;
+                margin-top: 12px !important;
+            }
+            #columns.ytd-watch-flexy {
+                max-width: ${maxWidthValue}px !important;
+            }
+            body.efyt-mini-player.efyt-mini-player-top-right #movie_player:not(.ytp-fullscreen) {
+                height: 315px !important;
+                border-radius: 14px !important;
+                top: 55px !important;
+                left: ${position}px !important;
+            }
+            body._top-right #efyt-close-mini-player {
+                top: 60px !important;
+                left: ${position}px !important;
+                width: 3%;
+                height: 3%;
+            }
+            `;
             let pageStyles = document.querySelector('style[data-page-styles]');
             if (!pageStyles) {
                 pageStyles = document.createElement('style');
@@ -413,7 +511,7 @@ height: 3%;
             pageStyles.textContent = cssRules;
         }
     }
-    // Original waitForDOMElement (restored)
+    // Original waitForDOMElement
     function waitForDOMElement(selector, callback, options = {}) {
         const { interval = 100, timeout = 10000 } = options;
         if (checkIfShortsPage()) {
@@ -523,81 +621,6 @@ height: 3%;
         }
     }
 
-    // Toggle button for YouTube Shorts
-    function createShortsSkipBtn() {
-        if (checkIfShortsPage()) {
-            let toggleButton = document.getElementById('shorts-skip-toggle');
-            if (!toggleButton) {
-                const autoskipContainer = document.createElement('div');
-                autoskipContainer.className =
-                    'navigation-button style-scope ytd-shorts';
-                autoskipContainer.id = 'shorts-autoskip';
-
-                toggleButton = document.createElement('button');
-                toggleButton.id = 'shorts-skip-toggle';
-                toggleButton.className = 'skip-toggle-btn';
-
-                const icon = document.createElement('span');
-                icon.className = 'toggle-icon';
-                icon.textContent = 'SKIP';
-                toggleButton.appendChild(icon);
-
-                // Create the tooltip
-                const tooltip = document.createElement('div');
-                tooltip.className = 'skip-tooltip';
-                tooltip.textContent = 'Toggle Video Skipping';
-                tooltip.setAttribute('role', 'tooltip');
-                tooltip.setAttribute('aria-label', 'Toggle Video Skipping');
-
-                // Append button and tooltip to container
-                autoskipContainer.appendChild(toggleButton);
-                autoskipContainer.appendChild(tooltip);
-
-                waitForDOMElement(
-                    '.navigation-container.style-scope.ytd-shorts',
-                    navigationContainer => {
-                        waitForDOMElement(
-                            '#navigation-button-up',
-                            navigationButtonUp => {
-                                navigationContainer.insertBefore(
-                                    autoskipContainer,
-                                    navigationButtonUp
-                                );
-                            },
-                            {
-                                interval: 100,
-                                timeout: 10000,
-                            }
-                        );
-                    },
-                    {
-                        interval: 100,
-                        timeout: 10000,
-                    }
-                );
-
-                toggleButton.addEventListener('click', () => {
-                    isSkippingEnabled = !isSkippingEnabled;
-                    icon.textContent = isSkippingEnabled ? 'SKIP' : 'NO SKIP';
-
-                    if (isSkippingEnabled) {
-                        const progressBarElement = document.querySelector(
-                            '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
-                        );
-                        if (progressBarElement && observer) {
-                            observer.observe(progressBarElement, {
-                                attributes: true,
-                                attributeFilter: ['aria-valuetext'],
-                            });
-                        }
-                    } else if (!isSkippingEnabled && observer) {
-                        observer.disconnect();
-                    }
-                });
-            }
-        }
-    }
-
     // Helper functions
     function checkIfWatchPage() {
         return window.location.href.includes('youtube.com/watch');
@@ -609,7 +632,7 @@ height: 3%;
 
     // Function to pause the video directly
     function pauseVideo() {
-        const videoElement = document.querySelector('video'); // Find the video element
+        const videoElement = document.querySelector('video');
         if (videoElement && !videoElement.paused) {
             videoElement.pause();
         }
@@ -623,7 +646,7 @@ height: 3%;
         }
     }
 
-    // Original URL change detection (restored)
+    // Original URL change detection
     function checkUrlChange() {
         const currentUrl = window.location.href;
         if (currentUrl !== lastUrl) {
@@ -689,11 +712,13 @@ height: 3%;
     });
 
     window.addEventListener('popstate', () => {
+        updateLayout();
         createScrollToTopBtn();
     });
 
     window.addEventListener('DOMContentLoaded', () => {
         checkUrlChange();
+        createScrollToTopBtn();
     });
 
     updateLayout();
