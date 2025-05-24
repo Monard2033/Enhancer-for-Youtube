@@ -38,285 +38,281 @@
     const styleElement = document.createElement('style');
     document.head.appendChild(styleElement);
     styleElement.textContent = `
-        :root {
-            --dark-bt: rgb(200 200 200 / 15%);
-            --dark-bt-hover: rgba(255 255 255 /25%);
-            --dark-bt-tp: rgb(0 0 0/ 1%);
-            --light-bt: rgb(0 0 0 / 7%);
-            --light-bt-tp: rgb(255 255 255/ 1%);
-            --light-bt-hover: rgb(0 0 0 /15%);
-        }
+    :root {
+    --dark-bt: rgb(200 200 200 / 15%);
+    --dark-bt-hover: rgba(255 255 255 /25%);
+    --dark-bt-tp: rgb(0 0 0/ 1%);
+    --light-bt: rgb(0 0 0 / 7%);
+    --light-bt-tp: rgb(255 255 255/ 1%);
+    --light-bt-hover: rgb(0 0 0 /15%);
+    }
 
-        #start.ytd-masthead {
-            height: 50px;
-            border-radius: 30px;
-            display: flex;
-            position: static;
-            margin: 0 10%;
-            border: 1px dotted red;
-            background-color: var(--light-bt);
-        }
+    #start.ytd-masthead,
+    #end.ytd-masthead {
+        height: 50px;
+        border-radius: 30px;
+        display: flex;
+        position: static;
+        margin: 0 10%;
+        border: 1px dotted red;
+        background-color: var(--light-bt);
+    }
 
-        .ytSearchboxComponentHost {
-            height: 53px;
-            margin: 0 12px 0 0;
-        }
+    .ytSearchboxComponentHost {
+        height: 53px;
+        margin: 0 12px 0 0;
+    }
 
-        .ytSearchboxComponentInputBox {
-            margin-left: 0;
-            margin-top: 0;
-            border: 1px dotted red;
-            box-shadow: none;
-            height: 50px;
-            background: transparent;
-            background-color: var(--light-bt);
-            display: flex;
-            justify-content: space-around;
-        }
+    .ytSearchboxComponentInputBox {
+        margin: 0 0 0 0;
+        border: 1px dotted red;
+        box-shadow: none;
+        height: 50px;
+        background: transparent;
+        background-color: var(--light-bt);
+        display: flex;
+        justify-content: space-around;
+    }
 
-        #center.ytd-masthead {
-            margin: auto;
-        }
+    #center.ytd-masthead {
+        margin: auto;
+    }
 
-        #container.ytd-masthead {
-            margin-left: 0;
-            box-shadow: none;
-            background: transparent;
-            display: flex;
-            opacity: 0;
-            z-index: 1000;
-            justify-content: space-around;
-        }
+    #container.ytd-masthead {
+        box-shadow: none;
+        background: transparent;
+        display: flex;
+        opacity: 0;
+        z-index: 1000;
+        justify-content: space-evenly;
+    }
 
-        #end.ytd-masthead {
-            height: 50px;
-            min-width: 10px;
-            border-radius: 30px;
-            position: relative;
-            margin: 0 10%;
-            border: 1px dotted red;
-            background-color: var(--light-bt);
-        }
+    ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
+        min-width: 450px;
+        padding-right: 0px;
+    }
 
-        ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
-            min-width: 450px;
-            padding-right: 0px;
-        }
+    .ytSearchboxComponentSearchButton {
+        background: transparent;
+        border: 1px dotted red;
+        background-color: var(--light-bt);
+        height: 52px;
+    }
 
-        .ytSearchboxComponentSearchButton {
-            background: transparent;
-            border: 1px dotted red;
-            background-color: var(--light-bt);
-            height: 52px;
-        }
+    #background.ytd-masthead {
+        position: fixed;
+        opacity: 0;
+        visibility: visible;
+    }
 
-        #background.ytd-masthead {
-            position: fixed;
-            opacity: 0;
-            visibility: visible;
-        }
+    #search-form.ytd-searchbox {
+        height: 50px;
+    }
 
-        #search-form.ytd-searchbox {
-            height: 50px;
-        }
+    ytd-searchbox.ytd-masthead {
+        margin: 0;
+        padding: 0 10px;
+    }
 
-        ytd-searchbox.ytd-masthead {
-            margin: 0;
-            padding: 0 10px;
-        }
+    #sections.ytd-guide-renderer {
+        position: relative;
+    }
 
-        #sections.ytd-guide-renderer {
-            position: relative;
-        }
+    #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child {
+        padding: 0px;
+    }
 
-        #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child {
-            padding: 0px;
-        }
+    #voice-search-button.ytd-masthead {
+        margin-left: 0;
+        background: transparent;
+    }
 
+    #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
+        display: none;
+    }
+
+    .yt-spec-icon-shape {
+        color: #c00;
+    }
+
+    ytd-feed-filter-chip-bar-renderer {
+        height: 0;
+    }
+
+    #frosted-glass.with-chipbar.ytd-app {
+        display: none;
+    }
+
+    .yt-core-attributed-string--white-space-no-wrap {
+        color: #c00 !important;
+    }
+
+    .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled {
+        background: none !important;
+    }
+
+    .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
+        background-color: var(--light-bt) !important;
+    }
+
+    yt-chip-cloud-chip-renderer[chip-style=STYLE_DEFAULT][selected] #chip-container.yt-chip-cloud-chip-renderer {
+        background-color: var(--yt-spec-badge-chip-background) !important;
+        color: var(--yt-spec-text-primary) !important;
+    }
+
+    .yt-spec-touch-feedback-shape {
+        border: 1px dotted red;
+        background-color: var(--light-bt) !important;
+    }
+
+    .yt-spec-touch-feedback-shape:hover {
+        background-color: var(--light-bt-hover) !important;
+    }
+
+    #content>yt-lockup-view-model>div>yt-touch-feedback-shape>div {
+        background-color: var(--light-bt-tp) !important;
+        border: none !important;
+    }
+
+    #contents>yt-lockup-view-model:nth-child(n)>div>yt-touch-feedback-shape>div {
+        background-color: var(--light-bt-tp) !important;
+        border: none !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+
+        #start.ytd-masthead,
+        .ytSearchboxComponentInputBox,
+        #container.ytd-searchbox,
+        #end.ytd-masthead,
+        .scroll-top-btn,
+        .skip-toggle-btn,
+        .ytSearchboxComponentSearchButton,
+        .yt-spec-touch-feedback-shape,
+        .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
         #voice-search-button.ytd-masthead {
-            margin-left: 0;
-            background: transparent;
+            background-color: var(--dark-bt) !important;
         }
 
-        #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
-            display: none;
-        }
-
-        .yt-spec-icon-shape {
-            color: #c00;
-        }
-
-        ytd-feed-filter-chip-bar-renderer {
-            height: 0;
-        }
-
-        #frosted-glass.with-chipbar.ytd-app {
-            display: none;
-        }
-
-        .yt-core-attributed-string--white-space-no-wrap {
-            color: #c00 !important;
-        }
-
-        .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled {
-            background: none !important;
-        }
-
-        yt-chip-cloud-chip-renderer[chip-style=STYLE_DEFAULT][selected] #chip-container.yt-chip-cloud-chip-renderer {
-            background-color: var(--yt-spec-badge-chip-background) !important;
-            color: var(--yt-spec-text-primary) !important;
-        }
-
-        .yt-spec-touch-feedback-shape {
-            border: 1px dotted red;
-            background-color: var(--light-bt) !important;
-        }
-
-        .yt-spec-touch-feedback-shape:hover {
-            background-color: var(--light-bt-hover) !important;
-        }
-
-        #content > yt-lockup-view-model > div > yt-touch-feedback-shape > div {
-            background-color: var(--light-bt-tp) !important;
-            border: none !important;
-        }
-        #contents > yt-lockup-view-model:nth-child(n) > div > yt-touch-feedback-shape > div {
-            background-color: var(--light-bt-tp) !important;
+        #content>yt-lockup-view-model>div>yt-touch-feedback-shape>div {
+            background-color: var(--dark-bt-tp) !important;
             border: none !important;
         }
 
-        @media (prefers-color-scheme: dark) {
-            #start.ytd-masthead,
-            .ytSearchboxComponentInputBox,
-            #container.ytd-searchbox,
-            #end.ytd-masthead,
-            .scroll-top-btn,
-            .skip-toggle-btn,
-            .ytSearchboxComponentSearchButton,
-            .yt-spec-touch-feedback-shape,
-            .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
-            #voice-search-button.ytd-masthead {
-                background-color: var(--dark-bt) !important;
-            }
-
-            #content > yt-lockup-view-model > div > yt-touch-feedback-shape > div {
-                background-color: var(--dark-bt-tp) !important;
-                border: none !important;
-            }
-            #contents > yt-lockup-view-model:nth-child(n) > div > yt-touch-feedback-shape > div {
-                background-color: var(--dark-bt-tp) !important;
-                border: none !important;
-            }
-
-            #start.ytd-masthead:hover,
-            .ytSearchboxComponentInputBox:hover,
-            #container.ytd-searchbox:hover,
-            #end.ytd-masthead:hover,
-            .scroll-top-btn:hover,
-            .skip-toggle-btn:hover,
-            .ytSearchboxComponentSearchButton:hover,
-            .yt-spec-touch-feedback-shape:hover,
-            .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
-            #voice-search-button.ytd-masthead:hover {
-                background-color: var(--dark-bt-hover) !important;
-            }
+        #contents>yt-lockup-view-model:nth-child(n)>div>yt-touch-feedback-shape>div {
+            background-color: var(--dark-bt-tp) !important;
+            border: none !important;
         }
 
-        #scroll-top-container {
-            position: fixed;
-            bottom: 20px;
-            width: 55px;
-            height: 55px;
-            transition: opacity 0.3s ease;
-            z-index: 1000;
-            opacity: 0;
+        #start.ytd-masthead:hover,
+        .ytSearchboxComponentInputBox:hover,
+        #container.ytd-searchbox:hover,
+        #end.ytd-masthead:hover,
+        .scroll-top-btn:hover,
+        .skip-toggle-btn:hover,
+        .ytSearchboxComponentSearchButton:hover,
+        .yt-spec-touch-feedback-shape:hover,
+        .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
+        #voice-search-button.ytd-masthead:hover {
+            background-color: var(--dark-bt-hover) !important;
         }
+    }
 
-        .scroll-top-btn {
-            pointer-events: all;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 1px dotted red;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--light-bt);
-        }
+    #scroll-top-container {
+        position: fixed;
+        bottom: 20px;
+        width: 55px;
+        height: 55px;
+        transition: opacity 0.3s ease;
+        z-index: 1000;
+        opacity: 0;
+    }
 
-        .scroll-top-btn:hover {
-            background-color: var(--light-bt-hover);
-        }
+    .scroll-top-btn {
+        pointer-events: all;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 1px dotted red;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--light-bt);
+    }
 
-        .scroll-up-btn {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-        }
+    .scroll-top-btn:hover {
+        background-color: var(--light-bt-hover);
+    }
 
-        .skip-toggle-btn {
-            pointer-events: all;
-            width: 56px;
-            height: 56px;
-            margin: 0;
-            border-radius: 50%;
-            background-color: var(--light-bt);
-            cursor: pointer;
-            transition: background-color 0.2s ease, opacity 4s ease;
-            z-index: 1000;
-            opacity: 1;
-            border: 1px dotted red;
-            justify-content: center;
-            align-items: center;
-        }
+    .scroll-up-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+    }
 
-        .skip-toggle-btn:hover {
-            background-color: var(--light-bt-hover);
-        }
+    .skip-toggle-btn {
+        pointer-events: all;
+        width: 56px;
+        height: 56px;
+        margin: 0;
+        border-radius: 50%;
+        background-color: var(--light-bt);
+        cursor: pointer;
+        transition: background-color 0.2s ease, opacity 4s ease;
+        z-index: 1000;
+        opacity: 1;
+        border: 1px dotted red;
+        justify-content: center;
+        align-items: center;
+    }
 
-        .toggle-icon {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-            color: #c00;
-            font-size: 13px;
-            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
+    .skip-toggle-btn:hover {
+        background-color: var(--light-bt-hover);
+    }
+
+    .toggle-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        color: #c00;
+        font-size: 13px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
             'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-            font-weight: 600;
-        }
+        font-weight: 600;
+    }
 
-        .skip-tooltip {
-            display: flex;
-            position: absolute;
-            left: -150px;
-            top: 0;
-            height: 25px;
-            transform: translateY(8px);
-            background-color: #707070;
-            color: #ffffff;
-            padding: 6px 8px;
-            border-radius: 4px;
-            font-family: "Roboto", "Arial", sans-serif;
-            font-size: 1.2rem;
-            line-height: 1.8rem;
-            font-weight: 400;
-            align-items: center;
-            z-index: 1001;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s ease-in-out;
-        }
+    .skip-tooltip {
+        display: flex;
+        position: absolute;
+        left: -150px;
+        top: 0;
+        height: 25px;
+        transform: translateY(8px);
+        background-color: #707070;
+        color: #ffffff;
+        padding: 6px 8px;
+        border-radius: 4px;
+        font-family: "Roboto", "Arial", sans-serif;
+        font-size: 1.2rem;
+        line-height: 1.8rem;
+        font-weight: 400;
+        align-items: center;
+        z-index: 1001;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease-in-out;
+    }
 
-        .skip-toggle-btn:hover+.skip-tooltip,
-        .skip-tooltip:hover {
-            opacity: 1;
-            visibility: visible;
-        }
+    .skip-toggle-btn:hover+.skip-tooltip,
+    .skip-tooltip:hover {
+        opacity: 1;
+        visibility: visible;
+    }
     `;
 
     // Create and position the scroll-to-top button
@@ -451,13 +447,12 @@
 
     // Combined layout update
     function updateLayout() {
-        const masthead = document.querySelector('#masthead-container.ytd-app');
         const center = document.querySelector('#center.ytd-masthead');
         const container = document.querySelector('#container.ytd-masthead');
         const primaryElement = document.querySelector('#primary');
         const columnsElement = document.querySelector('#columns');
 
-        if (masthead && center && container) {
+        if (center && container) {
             const windowWidth = window.innerWidth;
             const scrollPosition = window.scrollY || document.documentElement.scrollTop;
             container.style.opacity = scrollPosition === 0 ? '1' : '0.6';
