@@ -1,15 +1,3 @@
-/**
- * ==UserScript==
- * @name         YouTube Enhancer Ultimate
- * @namespace    http://tampermonkey.net/
- * @version      1.0
- * @description  Enhances YouTube watch and shorts pages with custom layout, scroll-to-top, and auto-skip features.
- * @author       You
- * @match        https://www.youtube.com/*
- * @grant        none
- * ==/UserScript==
- */
-
 (function () {
     // Core Module: Utility functions and shared state
     const Core = (function () {
