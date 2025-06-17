@@ -68,7 +68,7 @@
                 const results = {};
                 let completed = 0;
                 let retryCount = 0;
-        
+
                 function pollElements(remainingSelectors) {
                     if (!remainingSelectors.length) {
                         resolve(results);
@@ -92,7 +92,7 @@
                             { interval: 100, timeout, delay: Core.state.lastMaxLoadTime || defaultDelay }
                         );
                     });
-        
+
                     setTimeout(() => {
                         if (completed < selectors.length && retryCount < maxRetries) {
                             retryCount++;
@@ -243,7 +243,8 @@
                 background: none !important;
                 color:black !important;
             }
-                .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
+            .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
+            .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--text {
                 background-color: var(--light-bt) !important;
             }
             yt-chip-cloud-chip-renderer[chip-style=STYLE_DEFAULT][selected] #chip-container.yt-chip-cloud-chip-renderer {
@@ -273,7 +274,7 @@
                 .skip-toggle-btn,
                 .ytSearchboxComponentSearchButton,
                 .yt-spec-touch-feedback-shape,
-                #voice-search-button.ytd-masthead 
+                #voice-search-button.ytd-masthead
                 {
                     background-color: var(--dark-bt) !important;
                 }
@@ -294,7 +295,7 @@
                 .ytSearchboxComponentSearchButton:hover,
                 .yt-spec-touch-feedback-shape:hover,
                 .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
-                #voice-search-button.ytd-masthead:hover 
+                #voice-search-button.ytd-masthead:hover
                 {
                     background-color: var(--dark-bt-hover) !important;
                 }
@@ -726,7 +727,7 @@
                 createScrollToTopBtn();
             }
         }
-    
+
         function removeScrollButton() {
             const scrollTopContainer = document.getElementById('scroll-top-container');
             if (scrollTopContainer) {
@@ -872,7 +873,7 @@
         Navigation.handleNavigationChange();
     }, 100));
     titleObserver.observe(document.querySelector('title'), { childList: true });
-    
+
     Layout.updateLayout();
     Navigation.handleNavigationChange();
 })();
