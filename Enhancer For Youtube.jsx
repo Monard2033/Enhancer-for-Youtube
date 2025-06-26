@@ -287,6 +287,9 @@
                     background-color: var(--dark-bt-tp) !important;
                     border: none !important;
                 }
+                .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled {
+                color: red !important;
+                }
                 #start.ytd-masthead:hover,
                 .ytSearchboxComponentInputBox:hover,
                 #container.ytd-searchbox:hover,
