@@ -1,3 +1,4 @@
+
 (function () {
     // Core Module: Shared state, utilities, and DOM cache
     const Core = (function () {
@@ -624,7 +625,7 @@
                                                     maxWidth = 0;
                                                     previousWidth = 0;
                                                 } else {
-                                                    state.previousWidth = widthNumber;
+                                                    previousWidth = widthNumber;
                                                 }
                                             }
                                         }
@@ -723,7 +724,7 @@
             if (scrollTopContainer) {
                 scrollTopContainer.style.opacity = (scrollPosition > 1000 && utils.checkIfWatchPage()) ? '1' : '0';
             }
-            if (utils.checkIfWatchPage() && !state.isScrollButtonCreated) {
+            if (utils.checkIfWatchPage() && !wsState.isScrollButtonCreated) {
                 createScrollToTopBtn();
             }
         }
@@ -732,7 +733,7 @@
             const scrollTopContainer = document.getElementById('scroll-top-container');
             if (scrollTopContainer) {
                 scrollTopContainer.remove();
-                state.isScrollButtonCreated = false;
+                wsState.isScrollButtonCreated = false;
             }
         }
 
