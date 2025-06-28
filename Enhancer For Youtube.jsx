@@ -1,4 +1,3 @@
-
 (function () {
     // Core Module: Shared state, utilities, and DOM cache
     const Core = (function () {
@@ -611,8 +610,8 @@
                                         }
                                         if (ariaValueText) {
                                             let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                                            if (isNaN(widthNumber)) {
-                                                return;
+                                            if(widthNumber >= 90) {
+                                            console.log("WN:" , widthNumber);
                                             }
                                             if (widthNumber >= maxWidth) {
                                                 maxWidth = widthNumber;
@@ -658,7 +657,7 @@
 
     // Watch Module: Scroll-to-top button
     const Watch = (function () {
-        const { state: wsState, utils } = Core;
+        const { state, utils } = Core;
 
         function createScrollToTopBtn() {
             let scrollTopContainer = document.getElementById('scroll-top-container');
@@ -689,7 +688,7 @@
                 scrollToTopBtn.appendChild(divElement);
                 scrollTopContainer.appendChild(scrollToTopBtn);
                 document.body.appendChild(scrollTopContainer);
-                wsState.isScrollButtonCreated = true;
+                state.isScrollButtonCreated = true;
 
                 const updatePosition = () => {
                     const viewportWidth = window.innerWidth;
@@ -727,7 +726,7 @@
             if (scrollTopContainer) {
                 scrollTopContainer.style.opacity = (scrollPosition > 1000 && utils.checkIfWatchPage()) ? '1' : '0';
             }
-            if (utils.checkIfWatchPage() && !wsState.isScrollButtonCreated) {
+            if (utils.checkIfWatchPage() && !state.isScrollButtonCreated) {
                 createScrollToTopBtn();
             }
         }
@@ -736,7 +735,7 @@
             const scrollTopContainer = document.getElementById('scroll-top-container');
             if (scrollTopContainer) {
                 scrollTopContainer.remove();
-                wsState.isScrollButtonCreated = false;
+                state.isScrollButtonCreated = false;
             }
         }
 
