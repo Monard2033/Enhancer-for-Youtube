@@ -254,8 +254,7 @@
                 background: none !important;
                 color:black !important;
             }
-            .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
-            .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--text {
+            .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
                 background-color: var(--light-bt) !important;
             }
             yt-chip-cloud-chip-renderer[chip-style=STYLE_DEFAULT][selected] #chip-container.yt-chip-cloud-chip-renderer {
@@ -668,7 +667,7 @@
 
     // Watch Module: Scroll-to-top button
     const Watch = (function () {
-        const { state, utils } = Core;
+        const { state: wsState, utils } = Core;
 
         function createScrollToTopBtn() {
             let scrollTopContainer = document.getElementById('scroll-top-container');
@@ -699,7 +698,7 @@
                 scrollToTopBtn.appendChild(divElement);
                 scrollTopContainer.appendChild(scrollToTopBtn);
                 document.body.appendChild(scrollTopContainer);
-                state.isScrollButtonCreated = true;
+                wsState.isScrollButtonCreated = true;
 
                 const updatePosition = () => {
                     const viewportWidth = window.innerWidth;
@@ -737,7 +736,7 @@
             if (scrollTopContainer) {
                 scrollTopContainer.style.opacity = (scrollPosition > 1000 && utils.checkIfWatchPage()) ? '1' : '0';
             }
-            if (utils.checkIfWatchPage() && !state.isScrollButtonCreated) {
+            if (utils.checkIfWatchPage() && !wsState.isScrollButtonCreated) {
                 createScrollToTopBtn();
             }
         }
@@ -746,7 +745,7 @@
             const scrollTopContainer = document.getElementById('scroll-top-container');
             if (scrollTopContainer) {
                 scrollTopContainer.remove();
-                state.isScrollButtonCreated = false;
+                wsState.isScrollButtonCreated = false;
             }
         }
 
