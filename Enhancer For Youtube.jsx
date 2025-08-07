@@ -1,3 +1,4 @@
+
 (function () {
     // Core Module: Shared state, utilities, and DOM cache
     const Core = (function () {
@@ -223,6 +224,7 @@
             #voice-search-button.ytd-masthead {
                 margin-left: 0;
                 background: transparent;
+                background-color: var(--light-bt) !important;
             }
             #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
                 display: none;
@@ -243,27 +245,12 @@
                 background: none !important;
                 color:black !important;
             }
-            .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text,
-            .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--text {
-                background-color: var(--light-bt) !important;
-            }
             yt-chip-cloud-chip-renderer[chip-style=STYLE_DEFAULT][selected] #chip-container.yt-chip-cloud-chip-renderer {
                 background-color: var(--yt-spec-badge-chip-background) !important;
                 color: var(--yt-spec-text-primary) !important;
             }
-            .yt-spec-touch-feedback-shape {
+            .yt-spec-touch-feedback-shape:not(.yt-spec-touch-feedback-shape--is-extended, .yt-spec-touch-feedback-shape--trigger-events) {
                 border: 1px dotted red;
-            }
-            .yt-spec-touch-feedback-shape:hover {
-                background-color: var(--light-bt-hover) !important;
-            }
-            #content > yt-lockup-view-model > div > yt-touch-feedback-shape > div {
-                background-color: var(--light-bt-tp) !important;
-                border: none !important;
-            }
-            #contents > yt-lockup-view-model:nth-child(n) > div > yt-touch-feedback-shape > div {
-                background-color: var(--light-bt-tp) !important;
-                border: none !important;
             }
             @media (prefers-color-scheme: dark) {
                 #start.ytd-masthead,
@@ -278,14 +265,6 @@
                 {
                     background-color: var(--dark-bt) !important;
                 }
-                #content > yt-lockup-view-model > div > yt-touch-feedback-shape > div {
-                    background-color: var(--dark-bt-tp) !important;
-                    border: none !important;
-                }
-                #contents > yt-lockup-view-model:nth-child(n) > div > yt-touch-feedback-shape > div {
-                    background-color: var(--dark-bt-tp) !important;
-                    border: none !important;
-                }
                 .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled {
                 color: red !important;
                 }
@@ -296,7 +275,6 @@
                 .scroll-top-btn:hover,
                 .skip-toggle-btn:hover,
                 .ytSearchboxComponentSearchButton:hover,
-                .yt-spec-touch-feedback-shape:hover,
                 .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
                 #voice-search-button.ytd-masthead:hover
                 {
@@ -343,9 +321,8 @@
                 cursor: pointer;
                 border: none;
                 transition: background-color 0.2s ease, opacity 4s ease;
-                z-index: 1000;
                 opacity: 1;
-                justify-content: center;
+                justify-self: center;
                 align-items: center;
             }
             .skip-toggle-btn:hover {
@@ -442,6 +419,9 @@
 
             function applyWatchStyles() {
                 const viewportWidth = window.innerWidth;
+                const video_player = document.querySelector("#movie_player > div.html5-video-container > video");
+                const video_bottom = document.querySelector("#movie_player > div.ytp-chrome-bottom");
+                const player_progress = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar > div.ytp-chapters-container > div");
                 let maxWidthValue, position;
                 if (window.screen.width === 2560 && window.screen.height === 1440) {
                     maxWidthValue = 2300;
@@ -473,7 +453,14 @@
                         width: 3%;
                         height: 3%;
                     }
+                    ytd-watch-flexy[flexy] #player-container-outer.ytd-watch-flexy {
+                    max-width: 1360px;
+                    max-height: 860px;
                 `;
+                //video_player.style.width = '1365px';
+                //video_player.style.height = '1065px';
+                //video_bottom.style.width = '1345px';
+                //player_progress.style.width = '1336px';
                 let pageStyles = document.querySelector('style[data-page-styles]');
                 if (!pageStyles) {
                     pageStyles = document.createElement('style');
@@ -556,94 +543,178 @@
         }
 
         function SkippingShortsMechanism() {
-            if (utils.checkIfShortsPage()) {
-                const currentShortsId = utils.getShortsId();
-                if (currentShortsId === state.lastProcessedShortsId && state.observer && currentShortsId === state.observerShortsId) {
-                    return;
+    if (Core.utils.checkIfShortsPage()) {
+        const currentShortsId = Core.utils.getShortsId();
+        if (currentShortsId === Core.state.lastProcessedShortsId && Core.state.observer && currentShortsId === Core.state.observerShortsId) {
+            // Verify if observer is capturing progress bar
+            const progressBarElement = document.querySelector('#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div');
+            if (progressBarElement && Core.state.observer) {
+                const ariaValueText = progressBarElement.getAttribute('aria-valuetext');
+                if (!ariaValueText || parseFloat(ariaValueText.replace('%', '')) === 0) {
+                    // Progress bar not updating, force reinitialization
+                    Core.state.observer.disconnect();
+                    Core.state.observer = null;
+                    Core.state.observerShortsId = null;
+                } else {
+                    return; // Observer is working, no need to reinitialize
                 }
-                state.isClicked = false;
-                state.lastProcessedShortsId = currentShortsId;
-
-                if (state.observer) {
-                    state.observer.disconnect();
-                    state.observer = null;
-                    state.observerShortsId = null;
-                }
-
-                const selectors = [
-                    '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
-                    '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
-                ];
-                utils.waitForAllDOMElements(selectors, { timeout: 15000, maxRetries: 2 })
-                    .then(results => {
-                        const navButton = results[selectors[0]].element;
-                        let progressBarElement = results[selectors[1]].element;
-                        if (!state.hasNavigationButtonBeenFetched) {
-                            state.navigationButtonDown = navButton;
-                            state.hasNavigationButtonBeenFetched = true;
-
-                            state.navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
-                                if (!e.isTrusted) {
-                                    return;
-                                }
-                                state.navigationButtonDown.removeEventListener('click', observerReinitHandler);
-                                if (state.observer) {
-                                    state.observer.disconnect();
-                                    state.observer = null;
-                                    state.observerShortsId = null;
-                                }
-                            });
-                        }
-
-                            let maxWidth = 0;
-                            let previousWidth = 0;
-                            let mutationCount = 0;
-
-                            state.observer = new MutationObserver(mutations => {
-                                mutationCount++;
-                                mutations.forEach(mutation => {
-                                    if (mutation.attributeName === 'aria-valuetext' && state.isSkippingEnabled) {
-                                        let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
-                                        if (!ariaValueText) {
-                                            progressBarElement = document.querySelector('#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div');
-                                            ariaValueText = progressBarElement ? progressBarElement.getAttribute('aria-valuetext') : null;
-                                        }
-                                        if (ariaValueText) {
-                                            let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                                            if(widthNumber >= 90) {
-                                            console.log("WN:" , widthNumber);
-                                            }
-                                            if (widthNumber >= maxWidth) {
-                                                maxWidth = widthNumber;
-                                                previousWidth = widthNumber;
-                                            } else if (!state.isClicked) {
-                                                if ((widthNumber === 0 || widthNumber === 1) && previousWidth >= 97) {
-                                                    utils.pauseVideo();
-                                                    state.navigationButtonDown.click();
-                                                    state.isClicked = true;
-                                                    state.observer.disconnect();
-                                                    state.observer = null;
-                                                    state.observerShortsId = null;
-                                                    maxWidth = 0;
-                                                    previousWidth = 0;
-                                                } else {
-                                                    previousWidth = widthNumber;
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                            });
-                            state.observer.observe(progressBarElement, {
-                                attributes: true,
-                                attributeFilter: ['aria-valuetext'],
-                            });
-                            state.observerShortsId = currentShortsId;
-                    })
-                .catch(err => console.error(`waitForAllDOMElements failed: ${err.message}`));
             }
         }
+        Core.state.isClicked = false;
+        Core.state.lastProcessedShortsId = currentShortsId;
 
+        // Disconnect existing observer immediately
+        if (Core.state.observer) {
+            Core.state.observer.disconnect();
+            Core.state.observer = null;
+            Core.state.observerShortsId = null;
+        }
+
+        const selectors = [
+            '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
+            '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
+        ];
+
+        // Function to initialize observer for the progress bar
+        function initializeObserver(progressBarElement, navButton) {
+            let maxWidth = 0;
+            let previousWidth = 0;
+            let mutationCount = 0;
+            let lastMutationTime = Date.now();
+
+            Core.state.observer = new MutationObserver(mutations => {
+                mutationCount++;
+                lastMutationTime = Date.now();
+                mutations.forEach(mutation => {
+                    if (mutation.attributeName === 'aria-valuetext' && Core.state.isSkippingEnabled) {
+                        // Revalidate progress bar element
+                        let currentProgressBar = document.querySelector('#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div');
+                        if (!currentProgressBar || currentProgressBar !== progressBarElement) {
+                            // Progress bar is stale, reinitialize
+                            Core.state.observer.disconnect();
+                            Core.state.observer = null;
+                            Core.state.observerShortsId = null;
+                            attemptObserverSetup(navButton);
+                            return;
+                        }
+
+                        let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
+                        if (ariaValueText) {
+                            let widthNumber = parseFloat(ariaValueText.replace('%', ''));
+                            console.log("WN:", widthNumber);
+                            if (widthNumber >= maxWidth) {
+                                maxWidth = widthNumber;
+                                previousWidth = widthNumber;
+                            } else if (!Core.state.isClicked) {
+                                if ((widthNumber === 0 || widthNumber === 1) && previousWidth >= 97) {
+                                    Core.utils.pauseVideo();
+                                    Core.state.navigationButtonDown.click();
+                                    Core.state.isClicked = true;
+                                    Core.state.observer.disconnect();
+                                    Core.state.observer = null;
+                                    Core.state.observerShortsId = null;
+                                    maxWidth = 0;
+                                    previousWidth = 0;
+                                } else {
+                                    previousWidth = widthNumber;
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+            Core.state.observer.observe(progressBarElement, {
+                attributes: true,
+                attributeFilter: ['aria-valuetext'],
+            });
+            Core.state.observerShortsId = currentShortsId;
+
+            // Monitor if observer is capturing updates
+            setTimeout(() => {
+                if (Date.now() - lastMutationTime > 2000 && Core.state.observer && Core.state.observerShortsId === currentShortsId) {
+                    console.warn("Observer not capturing progress bar, reinitializing...");
+                    Core.state.observer.disconnect();
+                    Core.state.observer = null;
+                    Core.state.observerShortsId = null;
+                    attemptObserverSetup(navButton);
+                }
+            }, 2500); // Check after 2.5s
+        }
+
+        // Function to attempt observer setup with polling
+        function attemptObserverSetup(navButton) {
+            const progressBarSelector = '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div';
+            Core.utils.waitForDOMElement(
+                progressBarSelector,
+                progressBarElement => {
+                    if (progressBarElement) {
+                        initializeObserver(progressBarElement, navButton);
+                    }
+                },
+                { interval: 50, timeout: 5000 } // Fast polling, 5s timeout
+            ).catch(err => {
+                console.error(`Failed to find progress bar: ${err.message}`);
+                // Retry once after a delay if initial attempt fails
+                setTimeout(() => {
+                    Core.utils.waitForDOMElement(
+                        progressBarSelector,
+                        progressBarElement => {
+                            if (progressBarElement) {
+                                initializeObserver(progressBarElement, navButton);
+                            }
+                        },
+                        { interval: 50, timeout: 3000 }
+                    ).catch(err => console.error(`Retry failed: ${err.message}`));
+                }, 1000);
+            });
+        }
+
+        Core.utils.waitForAllDOMElements(selectors, { timeout: 10000, maxRetries: 3 })
+            .then(results => {
+                const navButton = results[selectors[0]].element;
+                const progressBarElement = results[selectors[1]].element;
+
+                if (!Core.state.hasNavigationButtonBeenFetched) {
+                    Core.state.navigationButtonDown = navButton;
+                    Core.state.hasNavigationButtonBeenFetched = true;
+
+                    Core.state.navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
+                        if (!e.isTrusted) return;
+                        Core.state.navigationButtonDown.removeEventListener('click', observerReinitHandler);
+                        if (Core.state.observer) {
+                            Core.state.observer.disconnect();
+                            Core.state.observer = null;
+                            Core.state.observerShortsId = null;
+                        }
+                        attemptObserverSetup(navButton);
+                    });
+                }
+
+                attemptObserverSetup(navButton);
+            })
+            .catch(err => console.error(`waitForAllDOMElements failed: ${err.message}`));
+    }
+}
+        function handleKeyEvent(event) {
+            if (!Core.utils.checkIfShortsPage()) return;
+            const now = Date.now();
+            // Handle both keydown (38, 40) and keyup (38, 40) for Up/Down keys
+            if ((event.keyCode === 38 || event.keyCode === 40) && now - Core.state.lastKeyEvent > Core.state.debounceDelay) {
+                Core.state.lastKeyEvent = now;
+                if (Core.utils.checkIfShortsPage()) {
+                    const currentShortsId = Core.utils.getShortsId();
+                    if (currentShortsId !== Core.state.observerShortsId) {
+                        if (Core.state.observer) {
+                            Core.state.observer.disconnect();
+                            Core.state.observer = null;
+                            Core.state.observerShortsId = null;
+                        }
+                        Core.state.lastShortsId = currentShortsId;
+                    }
+                }
+            }
+        }
         function removeToggleButton() {
             const toggleButton = document.querySelector('#shorts-skip-toggle');
             if (toggleButton && toggleButton.parentNode) {
@@ -652,12 +723,12 @@
             }
         }
 
-        return { createShortsSkipBtn, SkippingShortsMechanism, removeToggleButton };
+        return { createShortsSkipBtn, SkippingShortsMechanism, removeToggleButton, handleKeyEvent };
     })();
 
     // Watch Module: Scroll-to-top button
     const Watch = (function () {
-        const { state, utils } = Core;
+        const { state: wsState, utils } = Core;
 
         function createScrollToTopBtn() {
             let scrollTopContainer = document.getElementById('scroll-top-container');
@@ -688,7 +759,7 @@
                 scrollToTopBtn.appendChild(divElement);
                 scrollTopContainer.appendChild(scrollToTopBtn);
                 document.body.appendChild(scrollTopContainer);
-                state.isScrollButtonCreated = true;
+                wsState.isScrollButtonCreated = true;
 
                 const updatePosition = () => {
                     const viewportWidth = window.innerWidth;
@@ -726,7 +797,7 @@
             if (scrollTopContainer) {
                 scrollTopContainer.style.opacity = (scrollPosition > 1000 && utils.checkIfWatchPage()) ? '1' : '0';
             }
-            if (utils.checkIfWatchPage() && !state.isScrollButtonCreated) {
+            if (utils.checkIfWatchPage() && !wsState.isScrollButtonCreated) {
                 createScrollToTopBtn();
             }
         }
@@ -735,7 +806,7 @@
             const scrollTopContainer = document.getElementById('scroll-top-container');
             if (scrollTopContainer) {
                 scrollTopContainer.remove();
-                state.isScrollButtonCreated = false;
+                wsState.isScrollButtonCreated = false;
             }
         }
 
@@ -830,24 +901,9 @@
         }
     });
 
-    document.addEventListener('keydown', function (event) {
-        if (!Core.utils.checkIfShortsPage()) return;
-        const now = Date.now();
-        if ((event.keyCode === 38 || event.keyCode === 40) && now - Core.state.lastKeyEvent > Core.state.debounceDelay) {
-            Core.state.lastKeyEvent = now;
-            if (Core.utils.checkIfShortsPage()) {
-                const currentShortsId = Core.utils.getShortsId();
-                if (currentShortsId !== Core.state.observerShortsId) {
-                    if (Core.state.observer) {
-                        Core.state.observer.disconnect();
-                        Core.state.observer = null;
-                        Core.state.observerShortsId = null;
-                    }
-                    Core.state.lastShortsId = currentShortsId;
-                }
-            }
-        }
-    });
+    // Attach the same handler to both keydown and keyup events
+    document.addEventListener('keydown', Shorts.handleKeyEvent);
+    document.addEventListener('keyup', Shorts.handleKeyEvent);
 
     window.addEventListener('scroll', Core.utils.debounce(Watch.handleScroll, 150));
 
