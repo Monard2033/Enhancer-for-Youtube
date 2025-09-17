@@ -1,5 +1,5 @@
 {
-  "version": "3.0.10",
+  "version": "3.0.11",
   "settings": {
     "applyvideofilters": false,
     "backdropcolor": "#000000",
@@ -84,7 +84,7 @@
     "pauseforegroundtab": false,
     "pausevideos": true,
     "popuplayersize": "747x420",
-    "previousversion": "3.0.9",
+    "previousversion": "3.0.10",
     "qualityembeds": "hd720",
     "qualityembedsfullscreen": "hd1080",
     "qualityplaylists": "hd720",
@@ -102,7 +102,7 @@
     "theatermode": false,
     "theme": "default-dark",
     "themevariant": "dark-red.css",
-    "update": 1754400243987,
+    "update": 1756586337685,
     "vendorthemevariant": "youtube-deep-dark.css",
     "videofilters": {
       "blur": 0,
