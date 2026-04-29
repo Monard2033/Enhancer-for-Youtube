@@ -1,478 +1,468 @@
-var styleElement = document.createElement('style');
-let buttonPosition;
-let position;
-let observer = null;
-let isClicked = true;
-let lastUrl = null;
-let toggleButton = null;
-let isSkippingEnabled = true;
-let isRestartScheduled = false;
-let hasNavigationButtonBeenFetched = false;
+(function () {
+    'use strict';
 
-function createScrollToTopButton() {
-    const existingButton = document.getElementById('scroll-to-top');
-    if (existingButton) {
-        existingButton.remove();
-    }
-    // Remove existing styles if present
-    const existingStyles = document.querySelector('style[data-scroll-top-styles]');
-    if (existingStyles) {
-        existingStyles.remove();
-    }
-    const scrollToTopBtn = document.createElement('button');
-    const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    const divElement = document.createElement('div');
-    const scrollTopBtnStyles = document.createElement('style');
+    // CONFIG - toate constantele centralizate
+    const CONFIG = {
+        masthead: {
+            minCenter: 200,
+            maxCenter: 550,
+            breakpoint: 1035,
+            growthFactor: 0.3955,
+        },
+        watch: {
+            topBarHeightPx: 56,
+            defaultMaxWidthPrimary: 1820,
+            defaultMaxWidthColumns: 2200,
+            uhd: {
+                minWidth: 2560, minHeight: 1440,
+                maxWidth: 3840, maxHeight: 2160,
+                maxWidthPrimary: 3300,
+                maxWidthColumns: 2800
+            },
+            heightChangeThreshold: 0.4
+        },
+        miniPlayer: {
+            width: 560,
+            height: 315,
+            top: 55,
+            positionFactorUHD: 0.769,
+            positionFactorDefault: 0.8633,
+            positionMinUHD: 2560,
+            positionMaxUHD: 3840,
+            positionMinDefault: 410,
+            positionMaxDefault: 1220,
+            scrollThreshold: 1000
+        },
+        selectors: {
+            mastheadCenter: '#center.ytd-masthead',
+            mastheadContainer: '#container.ytd-masthead',
+            watchPrimary: '#primary',
+            watchColumns: '#columns',
+            shortsProgressBar: '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
+            shortsNavDown: '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
+            gridRenderer: '#primary > ytd-rich-grid-renderer'
+        }
+    };
 
-    scrollToTopBtn.id = 'scroll-to-top';
-    scrollToTopBtn.classList.add('scroll-top-btn');
-    scrollToTopBtn.setAttribute('aria-label', 'Scroll to Top');
+    // Core - state, utils, cache cu optimizări
+    const Core = (function () {
+        const state = {
+            isSkippingEnabled: true,
+            hasNavigationButtonBeenFetched: false,
+            navigationButtonDown: null,
+            lastShortsId: null,
+            observer: null,
+            observerShortsId: null,
+            isScrollButtonCreated: false,
+            lastProcessedShortsId: null,
+            lastHeightVh: '90',
+            lastScrollY: 0,
+            lastWidth: window.innerWidth,
+            isMiniPlayerActive: false,
+            lastMiniLeft: 0,
+            lastUrl: null,
+            lastKeyEvent: 0,
+            debounceDelay: 200,
+            isClicked: false
+        };
 
-    svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    svgElement.setAttribute('height', '24');
-    svgElement.setAttribute('viewBox', '0 0 24 24');
-    svgElement.setAttribute('width', '24');
-    svgElement.setAttribute('focusable', 'false');
-    svgElement.style.fill = 'red';
-    svgElement.style.display = 'flex';
+        const cache = new Map();
+        const playerElementsCache = new Map();
 
-    pathElement.setAttribute(
-        'd',
-        'M19.884 10.114a1.25 1.25 0 01-1.768 1.768L13.25 7.016v12.982a1.25 1.25 0 11-2.5 0V7.016l-4.866 4.866a1.25 1.25 0 11-1.768-1.768L12 2.23l7.884 7.884Z'
-    );
+        function throttle(fn, delay) {
+            let last = 0;
+            return (...args) => {
+                const now = Date.now();
+                if (now - last >= delay) {
+                    last = now;
+                    fn(...args);
+                }
+            };
+        }
 
-    var viewportWidth = window.innerWidth;
-    if (window.screen.width === 2560 && window.screen.height === 1440) {
-        buttonPosition = viewportWidth * 0.73;
-    } else {
-        buttonPosition = viewportWidth * 0.7;
-    }
+        function debounce(fn, delay) {
+            let id;
+            return (...args) => {
+                clearTimeout(id);
+                id = setTimeout(() => fn(...args), delay);
+            };
+        }
 
-    svgElement.appendChild(pathElement);
-    divElement.classList.add('scroll-up-btn');
-    divElement.appendChild(svgElement);
-    scrollToTopBtn.appendChild(divElement);
-
-    scrollTopBtnStyles.setAttribute('data-scroll-top-styles', 'true');
-    scrollTopBtnStyles.textContent = `
-    .scroll-top-btn {
-      position: fixed;
-      opacity: 0;
-      bottom: 20px;
-      left: ${buttonPosition}px;
-      width: 55px;
-      height: 55px;
-      border: 1px solid red;
-      padding: 0;
-      border-radius: 50%;
-      background-color: var(--light-bt);
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .scroll-top-btn:hover {
-      background-color: var(--light-bt-hover);
-    }
-    @media (prefers-color-scheme: dark) {
-      .scroll-top-btn {
-        background-color: var(--dark-bt);
-      }
-      .scroll-top-btn:hover {
-        background-color: var(--dark-bt-hover);
-      }
-    }
-    .scroll-up-btn {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-      width: 100%;
-    }
-  `;
-    scrollToTopBtn.addEventListener('click', function () {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
-    });
-    const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-    if (scrollPosition > 1000 && checkIfWatchPage()) {
-        scrollToTopBtn.style.opacity = '1';
-    } else {
-        scrollToTopBtn.style.opacity = '0';
-    }
-    document.head.appendChild(styleElement);
-    document.head.appendChild(scrollTopBtnStyles);
-    document.body.appendChild(scrollToTopBtn);
-}
-// Function to update page elements under the video-player
-function updatePageElements() {
-    var primaryElement = document.querySelector('#primary');
-    var columnsElement = document.querySelector('#columns');
-    var viewportWidth = window.innerWidth;
-    if (columnsElement && primaryElement) {
-        var maxWidthValue;
-        if (window.screen.width === 2560 && window.screen.height === 1440) {
-            maxWidthValue = 2300;
-            if (window.pageYOffset >= 4200) {
-                position = viewportWidth * 0.75 + 20;
-            } else {
-                position = viewportWidth * 0.55 - 30;
+        function getElement(selector) {
+            if (!cache.has(selector)) {
+                const el = document.querySelector(selector);
+                if (el) cache.set(selector, el);
+                return el;
             }
-        } else if (window.screen.width === 1920 && window.screen.height === 1080) {
-            maxWidthValue = 1850;
-            position = viewportWidth * 0.45 - 10;
-        } else {
-            maxWidthValue = 1850;
+            const cached = cache.get(selector);
+            return cached && cached.isConnected ? cached : null;
         }
-    }
-    var cssRules = `
-    :root {
-      --dark-fl: brightness(0.6) !important;
-      --dark-fl-hover: brightness(0.6) !important;
-      --light-fl: brightness(0.8) !important;
-      --light-fl-hover: brightness(0.6) !important;
-      --dark-bt: rgba(39, 39, 39);
-      --dark-bt-hover: rgba(82, 82, 82);
-      --light-bt: rgba(242, 242, 242);
-      --light-bt-hover: rgba(217,217,217);
-    } 
-    #start.ytd-masthead {
-      height: 50px !important;
-      border-radius: 30px !important;
-      display: flex !important;
-      position: static !important;
-      margin: 0 10% !important;
-      border: 1px solid red !important;
-      backdrop-filter: var(--light-fl) !important;
-    }
-    .ytSearchboxComponentHost {
-      height: 53px !important;
-      margin: 0 12px 0 0 !important;
-    }
-    .ytSearchboxComponentInputBox {
-      margin-left: 0 !important;
-      margin-top: 0 !important;
-      border: 1px solid red !important;
-      box-shadow: none !important;
-      height: 50px !important;
-      background: transparent !important;
-      backdrop-filter: var(--light-fl) !important;
-      display: flex !important;
-      justify-content: space-around !important;
-    }
-    #center.ytd-masthead {
-      margin: auto !important;
-    }
-    #container.ytd-searchbox {
-      margin-left: 0 !important;
-      border: 1px solid red !important;
-      box-shadow: none !important;
-      background: transparent !important;
-      backdrop-filter: var(--light-fl) !important;
-      display: flex !important;
-      opacity: 0 !important;
-      justify-content: space-around !important;
-    }
-    #end.ytd-masthead {
-      height: 50px !important;
-      min-width: 10px !important;
-      border-radius: 30px !important;
-      position: relative !important;
-      margin: 0 10% !important;
-      border: 1px solid red !important;
-      backdrop-filter: var(--light-fl) !important;
-    } 
-    #primary.ytd-watch-flexy { 
-      max-width: ${maxWidthValue}px !important;
-      margin-left: 0px !important;
-      margin-top: 12px !important;
-    }
-    #columns.ytd-watch-flexy {
-     max-width: ${maxWidthValue}px !important;
-    }
-    ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
-      min-width: 450px !important;
-      padding-right: 0px !important;
-    }
-    .ytSearchboxComponentSearchButton {
-      background: transparent !important;
-      border: 1px solid red !important;
-      backdrop-filter: var(--light-fl) !important;
-      height: 52px !important;
-    }
-    .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
-      backdrop-filter: var(--light-fl) !important;
-      color: white !important;
-    }
-    #background.ytd-masthead {
-      position: fixed !important;
-      opacity: 0 !important;
-      visibility: visible !important;
-      --light-theme-text-color: invert !important;
-    }
-    #search-form.ytd-searchbox {
-      height: 50px !important;
-    }
-    ytd-searchbox.ytd-masthead {
-      margin: 0 !important;
-      padding: 0 10px !important;
-    }
-    #sections.ytd-guide-renderer {
-      position: relative !important;
-    }
-    #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child {
-      padding: 0px !important;
-    }
-    #voice-search-button.ytd-masthead {
-      margin-left: 0 !important;
-      //border: 1px solid red !important;
-      background: transparent !important;
-      backdrop-filter: var(--light-fl) !important;
-    }
-    #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
-      display: none !important;
-    }
-    .yt-spec-touch-feedback-shape__fill {
-      background-color: black !important;
-    }
-    .yt-spec-icon-shape {
-      color: #c00 !important;
-    }
-    ytd-feed-filter-chip-bar-renderer {
-      height: 0 !important;
-    }
-    body.efyt-mini-player.efyt-mini-player-top-right #movie_player:not(.ytp-fullscreen) {
-      height: 315px !important;
-      border-radius: 14px !important;
-      width: 560px !important;
-      top: 55px !important;
-      left: ${position}px !important;
-      z-index: 1000 !important;
-    }
-    body._top-right #efyt-close-mini-player {
-      top: 60px !important;
-      left: ${position}px !important;
-      width: 3% !important;
-      height: 3% !important;
-    }  
-    #frosted-glass.with-chipbar.ytd-app {
-     display: none;
-    }
-    .yt-spec-touch-feedback-shape {
-    border: 1px solid red;
-    }
-    @media (prefers-color-scheme: dark) {
-      #start.ytd-masthead {
-        backdrop-filter: var(--dark-fl) !important;}
-        #start.ytd-masthead:hover {
-        backdrop-filter: var(--dark-fl-hover) !important;}
-      .ytSearchboxComponentInputBox {
-        backdrop-filter: var(--dark-fl) !important;}
-        .ytSearchboxComponentInputBox:hover {
-        backdrop-filter: var(--dark-fl-hover) !important;}
-      #container.ytd-searchbox {
-        backdrop-filter: var(--dark-fl) !important;}
-        #container.ytd-searchbox:hover {
-        backdrop-filter: var(--dark-fl-hover) !important;}
-      #end.ytd-masthead {
-        backdrop-filter: var(--dark-fl) !important;}
-        #end.ytd-masthead:hover {
-        backdrop-filter: var(--dark-fl-hover) !important;}
-      .ytSearchboxComponentSearchButton {
-        backdrop-filter: var(--dark-fl) !important;}
-        .ytSearchboxComponentSearchButton:hover {
-        backdrop-filter: var(--dark-fl-hover) !important;}
-      .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text {
-        backdrop-filter: var(--dark-fl) !important;}
-        .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover {
-        backdrop-filter: var(--dark-fl-hover) !important;}
-      #voice-search-button.ytd-masthead {
-        backdrop-filter: var(--dark-fl) !important;}
-        #voice-search-button.ytd-masthead:hover {
-        backdrop-filter: var(--dark-fl-hover) !important;}
-    }
-  `;
-    styleElement.textContent = cssRules;
-}
-// Dynamically move elements of the top bar when the page is resized or scrolled
-function adjustTopBarElements() {
-    const masthead = document.querySelector('#masthead-container.ytd-app');
-    const center = document.querySelector('#center.ytd-masthead');
-    const container = document.querySelector('#container.ytd-masthead');
-    if (masthead && center && container) {
-        const windowWidth = window.innerWidth;
-        var scrollY = window.scrollY;
-        var mastheadWidth;
-        if (scrollY != 0) {
-            container.style.opacity = `0.8`;
-        } else if (scrollY === 0) {
-            container.style.opacity = `1`;
+
+        function waitForElement(selector, options = {}) {
+            const { timeout = 15000, interval = 100 } = options;
+            return new Promise((resolve, reject) => {
+                const el = getElement(selector);
+                if (el) return resolve(el);
+                const start = Date.now();
+                const check = () => {
+                    const el = getElement(selector);
+                    if (el) resolve(el);
+                    else if (Date.now() - start < timeout) setTimeout(check, interval);
+                    else reject(new Error(`Timeout for ${selector}`));
+                };
+                check();
+            });
         }
-        if (windowWidth <= 658) {
-            mastheadWidth = 0;
-        } else if (windowWidth >= 1750) {
-            mastheadWidth = 100;
-        } else {
-            mastheadWidth = ((windowWidth - 658) / (1750 - 658)) * 100;
+
+        async function waitForAllDOMElements(selectors, options = {}) {
+            const { timeout = 15000, maxRetries = 3 } = options;
+            const results = await Promise.all(selectors.map((selector, index) => waitForElement(selector, { timeout }).then(element => ({
+                selector,
+                element,
+                index
+            })).catch(error => {
+                if (maxRetries > 0) {
+                    return waitForAllDOMElements([selector], { timeout, maxRetries: maxRetries - 1 });
+                }
+                throw error;
+            })
+            ));
+            return results.reduce((acc, r) => {
+                acc[selectors[r.index]] = { element: r.element };
+                return acc;
+            }, {});
         }
-        //masthead.style.width = `${mastheadWidth}%`;
-        let centerFlexBasis = 0;
-        if (windowWidth <= 658) {
-            centerFlexBasis = 200;
-        } else if (windowWidth >= 1750) {
-            centerFlexBasis = 550;
-        } else {
-            centerFlexBasis =
-                200 + ((windowWidth - 658) / (1750 - 658)) * (550 - 200);
+
+        function checkIfWatchPage() {
+            return window.location.href.includes('youtube.com/watch');
         }
-        center.style.flex = `0 0 ${centerFlexBasis}px`;
-    }
-}
-// Function to wait for a DOM element to be available
-function waitForDOMElement(selector, callback, options = {}) {
-    const { interval = 100, timeout = 10000 } = options;
-    if (checkIfShortsPage()) {
-        const startTime = Date.now();
-        const checkElement = () => {
-            const element = document.querySelector(selector);
-            if (element) {
-                callback(element);
-            } else if (Date.now() - startTime < timeout) {
-                setTimeout(checkElement, interval);
+
+        function checkIfShortsPage() {
+            return window.location.href.includes('youtube.com/shorts');
+        }
+
+        function getShortsId() {
+            const match = window.location.href.match(/youtube\.com\/shorts\/([^?]+)/);
+            return match ? match[1] : null;
+        }
+
+        function pauseVideo() {
+            const video = document.querySelector('video');
+            if (video && !video.paused) video.pause();
+        }
+
+        function safeInjectCSS(css, id) {
+            let style = document.getElementById(id);
+            if (!style) {
+                style = document.createElement('style');
+                style.id = id;
+                document.head.appendChild(style);
+            }
+            style.textContent = css;
+        }
+
+        function clearPlayerCache() {
+            playerElementsCache.clear();
+        }
+
+        return {
+            state,
+            cache,
+            playerElementsCache,
+            utils: {
+                throttle,
+                debounce,
+                getElement,
+                waitForElement,
+                waitForAllDOMElements,
+                checkIfWatchPage,
+                checkIfShortsPage,
+                getShortsId,
+                pauseVideo,
+                safeInjectCSS,
+                clearPlayerCache
             }
         };
-        checkElement();
-    } else {
-        return;
-    }
-}
-// Function to restart the observer
-function restartObserver() {
-    if (isRestartScheduled) {
-        return;
-    }
-    isRestartScheduled = true;
-    setTimeout(() => {
-        isRestartScheduled = false;
-        SkippingShorts();
-    }, 1000);
-}
-// Function to handle skipping shorts
-function SkippingShorts() {
-    if (checkIfShortsPage()) {
-        isClicked = false;
-        if (!hasNavigationButtonBeenFetched) {
-            waitForDOMElement(
-                '#navigation-button-down > ytd-button-renderer > yt-button-shape > button',
-                button => {
-                    navigationButtonDown = button;
-                    hasNavigationButtonBeenFetched = true;
+    })();
 
-                    navigationButtonDown.addEventListener(
-                        'click',
-                        function observerReinitHandler(e) {
-                            if (!e.isTrusted) return;
-                            navigationButtonDown.removeEventListener(
-                                'click',
-                                observerReinitHandler
-                            );
-                            if (observer) {
-                                observer.disconnect();
-                            }
-                            restartObserver();
-                        }
-                    );
-                },
-                {
-                    interval: 100,
-                    timeout: 10000,
-                } // Pass options as an object
-            );
-        }
-        waitForDOMElement(
-            '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div',
-            progressBarElement => {
-                if (observer) {
-                    observer.disconnect();
+    // Styles - CSS base injectat o dată
+    (function injectBaseStyles() {
+        const styleElement = document.createElement('style');
+        document.head.appendChild(styleElement);
+        styleElement.textContent = `
+            :root {
+                --dark-bt: rgb(200 200 200 / 15%);
+                --dark-bt-hover: rgba(255 255 255 /25%);
+                --dark-bt-tp: rgb(0 0 0 / 1%);
+                --light-bt: rgb(0 0 0 / 7%);
+                --light-bt-tp: rgb(255 255 255 / 1%);
+                --light-bt-hover: rgb(0 0 0 / 15%);
+                --efyt-mini-player-aspect-ratio: 1.8;
+                --efyt-mini-player-height: 315px;
+                --efyt-mini-player-width: 560px;
+                --efyt-mini-player-center-left: calc(100vw / 2 - 280px);
+                --efyt-mini-player-caption-window-left: calc(var(--efyt-mini-player-width) * 1 / 10);
+                --efyt-mini-player-caption-window-width: calc(var(--efyt-mini-player-width) * 8 / 10);
+                --efyt-mini-player-short-width: calc(var(--efyt-mini-player-height) * var(--efyt-mini-player-aspect-ratio));
+                --efyt-mini-player-short-left: calc(calc(var(--efyt-mini-player-width) - calc(var(--efyt-mini-player-height) * var(--efyt-mini-player-aspect-ratio))) / 2);
+                --efyt-mini-width: 560px;
+                --efyt-mini-height: 315px;
+                --efyt-mini-top: 55px;
+                --efyt-mini-left: 410px;
+                --efyt-mini-radius: 15px;
+            }
+            #start.ytd-masthead, #end.ytd-masthead {
+                height: 50px;
+                border-radius: 30px;
+                display: flex;
+                position: static;
+                margin: 0 10%;
+                border: 1px dotted red;
+                background-color: var(--light-bt);
+            }
+            .ytSearchboxComponentHost {
+                height: 53px;
+                margin: 0 12px 0 0;
+            }
+            .ytSearchboxComponentInputBox {
+                margin: 0 0 0 0;
+                border: 1px dotted red;
+                box-shadow: none;
+                height: 50px;
+                background: transparent;
+                background-color: var(--light-bt);
+                display: flex;
+                justify-content: space-around;
+            }
+            #center.ytd-masthead {
+                margin: auto;
+                flex: 0 0 550px;
+            }
+            .ytp-delhi-modern.ytp-big-mode:not(.ytp-xsmall-width-mode) .ytp-chrome-bottom {
+                height: 80px !important;
+            }
+            .ytp-big-mode .ytp-progress-bar-container {
+                bottom: 65.5px !important;
+            }
+            ytd-rich-grid-renderer {
+                --ytd-rich-grid-items-per-row: 4 !important;
+            }
+            #container.ytd-masthead {
+                box-shadow: none;
+                background: transparent;
+                display: flex;
+                opacity: 1;
+                z-index: 1000;
+                justify-content: space-evenly;
+            }
+            #contents.ytd-rich-grid-renderer {
+                padding-top: 65px;
+            }
+            ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
+                min-width: 450px;
+                padding-right: 0px;
+            }
+            .ytSearchboxComponentSearchButton {
+                background: transparent;
+                border: 1px dotted red;
+                background-color: var(--light-bt) !important;
+                height: 52px;
+            }
+            #background.ytd-masthead {
+                position: fixed;
+                opacity: 0;
+                visibility: visible;
+                background: transparent;
+                height: 56px;
+                z-index -1;
+            }
+            #search-form.ytd-searchbox {
+                height: 50px;
+            }
+            ytd-searchbox.ytd-masthead {
+                margin: 0;
+                padding: 0 10px;
+            }
+            #sections.ytd-guide-renderer {
+                position: relative;
+            }
+            #sections.ytd-guide-renderer>*.ytd-guide-renderer:first-child {
+                padding: 0px;
+            }
+            #voice-search-button.ytd-masthead {
+                margin-left: 0;
+                background: transparent;
+                background-color: var(--light-bt) !important;
+            }
+            #chips-wrapper.ytd-feed-filter-chip-bar-renderer {
+                opacity: 0.6;
+            }
+            .ytSpecIconShapeHost {
+                color: #c00;
+            }
+            ytd-feed-filter-chip-bar-renderer {
+                height: 0;
+            }
+            #frosted-glass.with-chipbar.ytd-app {
+                height: 112px !important;
+                backdrop-filter: blur(2px) !important;
+            }
+            .yt-core-attributed-string--white-space-no-wrap {
+                color: #c00;
+            }
+            .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled {
+                background: none;
+                color: black;
+            }
+            yt-chip-cloud-chip-renderer[chip-style=STYLE_DEFAULT][selected] #chip-container.yt-chip-cloud-chip-renderer {
+                background-color: var(--yt-spec-badge-chip-background);
+                color: var(--yt-spec-text-primary);
+            }
+            .ytSpecTouchFeedbackShapeHost:where([class="ytSpecTouchFeedbackShapeHost ytSpecTouchFeedbackShapeTouchResponse"]) {
+                border: 1px dotted red;
+            }
+            body.efyt-mini-player.efyt-short #movie_player:not(.ytp-fullscreen) video.html5-main-video,
+            body.efyt-wide-player.efyt-mini-player.efyt-short ytd-watch-flexy[theater] #movie_player:not(.ytp-fullscreen) video.html5-main-video {
+                left: var(--efyt-mini-player-short-left);
+                aspect-ratio: auto;
+                object-fit: contain;
+            }
+            body.efyt-mini-player #movie_player:not(.ytp-fullscreen) .ytp-caption-window-container > div.caption-window {
+                left: var(--efyt-mini-player-caption-window-left);
+            }
+            body.efyt-mini-player.efyt-short #movie_player:not(.ytp-fullscreen) {
+                height: var(--efyt-mini-player-height);
+                aspect-ratio: auto;
+            }
+            body.efyt-mini-player ytd-player #movie_player:not(.ytp-fullscreen) {
+                position: fixed !important;
+                z-index: 5000 !important;
+                background: rgb(0, 0, 0) !important;
+            }
+            .efyt-mini-active #movie_player {
+                position: fixed !important;
+                z-index: 5000 !important;
+                width: var(--efyt-mini-width) !important;
+                height: var(--efyt-mini-height) !important;
+                top: var(--efyt-mini-top) !important;
+                left: var(--efyt-mini-left) !important;
+                border-radius: var(--efyt-mini-radius) !important;
+                background: rgb(0, 0, 0) !important;
+            }
+            .efyt-mini-active .html5-main-video {
+                width: var(--efyt-mini-width) !important;
+                height: var(--efyt-mini-height) !important;
+                left: 0 !important;
+                border-radius: var(--efyt-mini-radius) !important;
+                object-fit: contain !important;
+            }
+            .efyt-mini-active .ytp-chrome-bottom {
+                left: 10px !important;
+                width: calc(100% - 20px) !important;
+                max-width: 530px !important;
+            }
+            @media (prefers-color-scheme: dark) {
+                #start.ytd-masthead,
+                .ytSearchboxComponentInputBox,
+                #container.ytd-searchbox,
+                #end.ytd-masthead,
+                .scroll-top-btn,
+                .skip-toggle-btn,
+                .ytSearchboxComponentSearchButton,
+                .ytSpecTouchFeedbackShapeHost:where([class="ytSpecTouchFeedbackShapeHost ytSpecTouchFeedbackShapeTouchResponse"]),
+                #voice-search-button.ytd-masthead {
+                    background-color: var(--dark-bt) !important;
                 }
-                let maxWidth = 0;
-
-                observer = new MutationObserver(mutations => {
-                    mutations.forEach(mutation => {
-                        if (
-                            mutation.attributeName === 'aria-valuetext' &&
-                            isSkippingEnabled
-                        ) {
-                            let ariaValueText =
-                                progressBarElement.getAttribute('aria-valuetext');
-                            let widthNumber = parseFloat(ariaValueText.replace('%', ``));
-                            if (widthNumber >= maxWidth) {
-                                maxWidth = widthNumber;
-                            } else if (maxWidth >= 95 && widthNumber < maxWidth - 10 && !isClicked) {
-                                dispatchSpacebarEvent();
-                                navigationButtonDown.click();
-                                isClicked = true;
-                                observer.disconnect();
-                                restartObserver();
-                                maxWidth = 0;
-                            }
-                        }
-                    });
-                });
-                observer.observe(progressBarElement, {
-                    attributes: true,
-                    attributeFilter: ['aria-valuetext'],
-                });
-            },
-            100,
-            10000
-        );
-    }
-}
-// Toggle Button for the YT Shorts Page
-function addToggleButton() {
-    if (checkIfShortsPage()) {
-        const windowHeight = window.innerHeight;
-        var buttonPosition;
-        if (windowHeight <= 575) {
-            buttonPosition = 123;
-        } else if (windowHeight >= 900) {
-            buttonPosition = 310;
-        } else {
-            buttonPosition = 123 + ((windowHeight - 575) / (900 - 575)) * (310 - 1123);
-        }
-        let toggleButton = document.getElementById('shorts-skip-toggle');
-        if (!toggleButton) {
-            // Create styles only once
-            const toggleStyles = document.createElement('style');
-            toggleStyles.id = 'toggleStyles';
-            toggleStyles.textContent = `
-            .skip-toggle-btn {
+                #content > yt-lockup-view-model > div > yt-touch-feedback-shape > div {
+                    background-color: var(--dark-bt-tp);
+                }
+                .yt-spec-button-shape-next__button-text-content {
+                    color: red;
+                }
+                #start.ytd-masthead:hover,
+                .ytSearchboxComponentInputBox:hover,
+                #container.ytd-searchbox:hover,
+                #end.ytd-masthead:hover,
+                .scroll-top-btn:hover,
+                .skip-toggle-btn:hover,
+                .ytSearchboxComponentSearchButton:hover,
+                .yt-spec-button-shape-next--overlay.yt-spec-button-shape-next--text:hover,
+                #voice-search-button.ytd-masthead:hover {
+                    background-color: var(--dark-bt-hover) !important;
+                }
+            }
+            #scroll-top-container {
+                position: fixed;
+                bottom: 20px;
+                width: 55px;
+                height: 55px;
+                transition: opacity 0.3s ease;
+                z-index: 1000;
+                opacity: 0;
+            }
+            .scroll-top-btn {
                 pointer-events: all;
                 width: 100%;
                 height: 100%;
-                margin: none;
                 border-radius: 50%;
-                background-color: var(--light-bt);
                 cursor: pointer;
-                transition: background-color 0.2s ease;
-                z-index: 1000;
-                opacity: 1;
-                border: 1px solid red;
+                border: 1px dotted red;
+                display: flex;
                 justify-content: center;
+                align-items: center;
+                background-color: var(--light-bt);
+            }
+            .scroll-top-btn:hover {
+                background-color: var(--light-bt-hover);
+            }
+            .scroll-up-btn {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+                width: 100%;
+            }
+            .scroll-tooltip {
+            display: flex;
+                position: absolute;
+                left: -100px;
+                top: 0;
+                height: 25px;
+                transform: translateY(8px);
+                background-color: #707070;
+                color: #ffffff;
+                padding: 6px 8px;
+                border-radius: 4px;
+                font-family: "Roboto", "Arial", sans-serif;
+                font-size: 1.2rem;
+                line-height: 1.8rem;
+                font-weight: 400;
+                align-items: center;
+                z-index: 1001;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.2s ease-in-out;
+            }
+            .scroll-top-btn:hover+.scroll-tooltip,
+            .scroll-tooltip:hover {
+            opacity: 1;
+                visibility: visible;
+                }
+            .skip-toggle-btn {
+                pointer-events: all;
+                width: 56px;
+                height: 56px;
+                margin: 0;
+                border-radius: 50%;
+                cursor: pointer;
+                border: none;
+                transition: background-color 0.2s ease, opacity 4s ease;
+                opacity: 1;
+                justify-self: center;
                 align-items: center;
             }
             .skip-toggle-btn:hover {
-                background-color: var(--light-bt-hover);
-            }
-            @media (prefers-color-scheme: dark) {
-                .skip-toggle-btn {
-                background-color: var(--dark-bt);
-                }
-                .skip-toggle-btn:hover {
-                background-color: var(--dark-bt-hover);
-                }
+                background-color: var(--light-bt-hover) !important;
             }
             .toggle-icon {
                 display: flex;
@@ -480,165 +470,956 @@ function addToggleButton() {
                 align-items: center;
                 height: 100%;
                 width: 100%;
-                color: #c02;
+                color: #c00;
                 font-size: 13px;
                 font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
-                'Lucida Sans Unicode', Geneva, Verdana, serif;
+                'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
                 font-weight: 600;
+            }
+            .skip-tooltip {
+                display: flex;
+                position: absolute;
+                left: -150px;
+                top: 0;
+                height: 25px;
+                transform: translateY(8px);
+                background-color: #707070;
+                color: #ffffff;
+                padding: 6px 8px;
+                border-radius: 4px;
+                font-family: "Roboto", "Arial", sans-serif;
+                font-size: 1.2rem;
+                line-height: 1.8rem;
+                font-weight: 400;
+                align-items: center;
+                z-index: 1001;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.2s ease-in-out;
+            }
+            .skip-toggle-btn:hover+.skip-tooltip,
+            .skip-tooltip:hover {
+                opacity: 1;
+                visibility: visible;
+            }
+        `;
+    })();
+
+    // Layout - optimizat fără redundanțe
+    const Layout = (function () {
+        const { utils, state } = Core;
+        let mastheadCacheInitialized = false;
+
+        function calculateFlexBasis(w) {
+            let basis = CONFIG.masthead.minCenter + (w - CONFIG.masthead.breakpoint) * CONFIG.masthead.growthFactor;
+            return Math.max(CONFIG.masthead.minCenter, Math.min(CONFIG.masthead.maxCenter, basis));
+        }
+
+        function initMastheadCache() {
+            if (mastheadCacheInitialized) return;
+            mastheadCacheInitialized = true;
+            utils.waitForElement(CONFIG.selectors.mastheadCenter).catch(() => { });
+            utils.waitForElement(CONFIG.selectors.mastheadContainer).catch(() => { });
+        }
+
+        function updateMasthead() {
+            const center = utils.getElement(CONFIG.selectors.mastheadCenter);
+            const container = utils.getElement(CONFIG.selectors.mastheadContainer);
+            const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+            if (!center || !container) return;
+            container.style.opacity = scrollPosition <= 25 ? '1' : '0.6';
+            center.style.flex = `0 0 ${calculateFlexBasis(window.innerWidth)}px`;
+        }
+
+        function calculateWatchHeight() {
+            const vh = window.innerHeight;
+            const topVh = (CONFIG.watch.topBarHeightPx / vh) * 100;
+            const availVh = 100 - topVh;
+            const aspectVh = (window.innerWidth / vh) * (9 / 16) * 100;
+            return Math.min(availVh, aspectVh).toFixed(2);
+        }
+
+        function getWatchMaxWidths() {
+            let primW = CONFIG.watch.defaultMaxWidthPrimary;
+            let colW = CONFIG.watch.defaultMaxWidthColumns;
+            const sw = window.screen.width, sh = window.screen.height;
+            if (sw >= CONFIG.watch.uhd.minWidth && sw <= CONFIG.watch.uhd.maxWidth &&
+                sh >= CONFIG.watch.uhd.minHeight && sh <= CONFIG.watch.uhd.maxHeight) {
+                primW = CONFIG.watch.uhd.maxWidthPrimary;
+                colW = CONFIG.watch.uhd.maxWidthColumns;
+            }
+            return { primW, colW };
+        }
+
+        function updateWatchStyles() {
+            if (!utils.checkIfWatchPage()) return;
+
+            const newHeight = calculateWatchHeight();
+            if (Math.abs(parseFloat(newHeight) - parseFloat(state.lastHeightVh)) <= CONFIG.watch.heightChangeThreshold) return;
+            state.lastHeightVh = newHeight;
+
+            const { primW, colW } = getWatchMaxWidths();
+
+            const css = `
+                #primary.ytd-watch-flexy {
+                    max-width: ${primW}px !important;
+                    margin-left: 10px !important;
+                    margin-top: 12px !important;
+                }
+                #columns.ytd-watch-flexy {
+                    max-width: ${colW}px !important;
+                }
+                ytd-watch-flexy[full-bleed-player][respect-aspect-ratio]:not([fullscreen]) #full-bleed-container.ytd-watch-flexy,
+                ytd-watch-flexy[full-bleed-player] #full-bleed-container.ytd-watch-flexy {
+                    z-index: 1200 !important;
+                    height: ${newHeight}vh;
+                    max-height: ${newHeight}vh;
+                }
+                .html5-video-player .video-stream {
+                    height: ${newHeight}vh;
+                }
+                .ytp-fit-cover-video .html5-main-video {
+                    object-fit: contain !important;
+                }
+                .ytp-delhi-modern .ytp-heat-map-container {
+                    left: 5px !important;
+                }
+                .ytp-progress-bar {
+                    left: 5px !important;
+                }
+                ytd-watch-flexy[full-bleed-player] #player-container.ytd-watch-flexy,
+                ytd-watch-flexy[full-bleed-player] #player.ytd-watch-flexy {
+                    max-height: ${newHeight}vh !important;
+                    height: ${newHeight}vh !important;
                 }
             `;
-            document.head.appendChild(toggleStyles);
-            // Create the container div
+            utils.safeInjectCSS(css, 'efyt-watch-styles');
+        }
+
+        return { initMastheadCache, updateMasthead, updateWatchStyles };
+    })();
+
+    // Shorts - optimizat cu observer unic
+    const Shorts = (function () {
+        const { state, utils } = Core;
+
+        function createShortsSkipBtn() {
+            if (!utils.checkIfShortsPage()) return;
+            let autoskipContainer = document.getElementById('shorts-autoskip');
+            if (!autoskipContainer) {
             const autoskipContainer = document.createElement('div');
             autoskipContainer.className = 'navigation-button style-scope ytd-shorts';
-            autoskipContainer.id = 'shorts autoskip';
-            autoskipContainer.style.width = '58px';
-            autoskipContainer.style.height = '58px';
+            autoskipContainer.id = 'shorts-autoskip';
 
-            // Create the button
             const toggleButton = document.createElement('button');
             toggleButton.id = 'shorts-skip-toggle';
             toggleButton.className = 'skip-toggle-btn';
-            toggleButton.title = 'Toggle Video Skipping (ON = Skip, OFF = No Skip)';
+
+            const touchFeedbackShape = document.createElement('div');
+            touchFeedbackShape.className = 'ytSpecTouchFeedbackShapeHost ytSpecTouchFeedbackShapeTouchResponse';
+            toggleButton.appendChild(touchFeedbackShape);
 
             const icon = document.createElement('span');
             icon.className = 'toggle-icon';
             icon.textContent = 'SKIP';
             toggleButton.appendChild(icon);
 
-            // Append button to container
+            const tooltip = document.createElement('div');
+            tooltip.className = 'skip-tooltip';
+            tooltip.textContent = 'Toggle Video Skipping';
+            tooltip.setAttribute('role', 'tooltip');
+            tooltip.setAttribute('aria-label', 'Toggle Video Skipping');
+
             autoskipContainer.appendChild(toggleButton);
+            autoskipContainer.appendChild(tooltip);
 
-            waitForDOMElement(
-                '.navigation-container.style-scope.ytd-shorts',
-                (navigationContainer) => {
-                    waitForDOMElement(
-                        '#navigation-button-up',
-                        (navigationButtonUp) => {
-                            navigationContainer.insertBefore(autoskipContainer, navigationButtonUp);
-                        },
-                        { interval: 100, timeout: 10000 }
-                    );
-                },
-                { interval: 100, timeout: 10000 }
-            );
-
-            toggleButton.addEventListener('click', () => {
-                isSkippingEnabled = !isSkippingEnabled;
-                icon.textContent = isSkippingEnabled ? 'SKIP' : 'NO SKIP';
-
-                if (isSkippingEnabled) {
-                    const progressBarElement = document.querySelector(
-                        '#scrubber > desktop-shorts-player-controls > div > yt-progress-bar > div'
-                    );
-                    if (progressBarElement) {
-                        observer.observe(progressBarElement, {
-                            attributes: true,
-                            attributeFilter: ['aria-valuetext'],
-                        });
+            // -------------------------------
+            // Folosim waitForElement în stilul tău (cu .then + catch)
+            // -------------------------------
+            utils.waitForElement('.navigation-container.style-scope.ytd-shorts')
+                .then(navigationContainer => {
+                    return utils.waitForElement('#navigation-button-up', { timeout: 10000 });
+                    // ^ aici poți ajusta timeout-ul dacă e nevoie
+                })
+                .then(navigationButtonUp => {
+                    // Avem ambele elemente → inserăm butonul
+                    const navigationContainer = navigationButtonUp.closest('.navigation-container.style-scope.ytd-shorts');
+                    if (navigationContainer) {
+                        navigationContainer.insertBefore(autoskipContainer, navigationButtonUp);
                     }
-                } else if (!isSkippingEnabled && observer) {
-                    observer.disconnect();
+
+                    // Adăugăm event listener-ul doar după ce butonul e în DOM
+                    toggleButton.addEventListener('click', () => {
+                        state.isSkippingEnabled = !state.isSkippingEnabled;
+                        icon.textContent = state.isSkippingEnabled ? 'SKIP' : 'NO SKIP';
+
+                        if (state.isSkippingEnabled && state.observer) {
+                            const progressBarElement = document.querySelector(CONFIG.selectors.shortsProgressBar);
+                            if (progressBarElement) {
+                                state.observer.observe(progressBarElement, {
+                                    attributes: true,
+                                    attributeFilter: ['aria-valuetext'],
+                                });
+                            }
+                        } else if (!state.isSkippingEnabled && state.observer) {
+                            state.observer.disconnect();
+                        }
+                    });
+                })
+                .catch(err => {
+                    // Opțional: loghezi eroarea sau ignori silențios
+                    console.warn('Nu s-a putut adăuga butonul de skip pe Shorts:', err.message);
+                    // Poți încerca o reinserare mai târziu dacă dorești (re-call createShortsSkipBtn)
+                });
+             }
+        }
+
+        function initProgressBarObserver(progressBarElement, navButton) {
+            if (state.observer) {
+                state.observer.disconnect();
+            }
+
+            let maxWidth = 0;
+            let previousWidth = 0;
+            const currentShortsId = utils.getShortsId();
+
+            state.observer = new MutationObserver(mutations => {
+                if (!state.isSkippingEnabled) return;
+
+                mutations.forEach(mutation => {
+                    if (mutation.attributeName === 'aria-valuetext') {
+                        let currentProgressBar = document.querySelector(CONFIG.selectors.shortsProgressBar);
+                        if (!currentProgressBar || currentProgressBar !== progressBarElement) {
+                            if (state.observer) {
+                                state.observer.disconnect();
+                                state.observer = null;
+                            }
+                            return;
+                        }
+
+                        let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
+                        if (ariaValueText) {
+                            let widthNumber = parseFloat(ariaValueText.replace('%', ''));
+                            if (widthNumber >= maxWidth) {
+                                maxWidth = widthNumber;
+                                previousWidth = widthNumber;
+                            } else if (!state.isClicked) {
+                                if ((widthNumber === 0 || widthNumber === 1) && previousWidth >= 97) {
+                                    utils.pauseVideo();
+                                    if (state.navigationButtonDown) {
+                                        state.navigationButtonDown.click();
+                                    }
+                                    state.isClicked = true;
+                                    if (state.observer) {
+                                        state.observer.disconnect();
+                                        state.observer = null;
+                                    }
+                                    maxWidth = 0;
+                                    previousWidth = 0;
+                                } else {
+                                    previousWidth = widthNumber;
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+            if (state.isSkippingEnabled) {
+                state.observer.observe(progressBarElement, {
+                    attributes: true,
+                    attributeFilter: ['aria-valuetext'],
+                });
+            }
+            state.observerShortsId = currentShortsId;
+        }
+
+        function initializeShortsObserver() {
+            const currentShortsId = utils.getShortsId();
+
+            if (currentShortsId === state.observerShortsId && state.observer) {
+                return;
+            }
+
+            state.lastProcessedShortsId = currentShortsId;
+
+            const selectors = [
+                CONFIG.selectors.shortsNavDown,
+                CONFIG.selectors.shortsProgressBar
+            ];
+
+            utils.waitForAllDOMElements(selectors, { timeout: 10000, maxRetries: 2 })
+                .then(results => {
+                    const navButton = results[selectors[0]].element;
+                    const progressBarElement = results[selectors[1]].element;
+
+                    if (!state.hasNavigationButtonBeenFetched) {
+                        state.navigationButtonDown = navButton;
+                        state.hasNavigationButtonBeenFetched = true;
+                    }
+
+                    initProgressBarObserver(progressBarElement, navButton);
+                })
+                .catch(err => console.error(`Failed to initialize Shorts observer: ${err.message}`));
+        }
+
+        function skippingShortsMechanism() {
+            if (utils.checkIfShortsPage()) {
+                const currentShortsId = utils.getShortsId();
+                if (currentShortsId === state.lastProcessedShortsId && state.observer && currentShortsId === state.observerShortsId) {
+                    // Verify if observer is capturing progress bar
+                    const progressBarElement = document.querySelector(CONFIG.selectors.shortsProgressBar);
+                    if (progressBarElement && state.observer) {
+                        const ariaValueText = progressBarElement.getAttribute('aria-valuetext');
+                        if (!ariaValueText || parseFloat(ariaValueText.replace('%', '')) === 0) {
+                            // Progress bar not updating, force reinitialization
+                            state.observer.disconnect();
+                            state.observer = null;
+                            state.observerShortsId = null;
+                        } else {
+                            return; // Observer is working, no need to reinitialize
+                        }
+                    }
+                }
+                state.isClicked = false;
+                state.lastProcessedShortsId = currentShortsId;
+
+                // Disconnect existing observer immediately
+                if (state.observer) {
+                    state.observer.disconnect();
+                    state.observer = null;
+                    state.observerShortsId = null;
+                }
+
+                const selectors = [
+                    CONFIG.selectors.shortsNavDown,
+                    CONFIG.selectors.shortsProgressBar
+                ];
+
+                // Function to initialize observer for the progress bar
+                function initializeObserver(progressBarElement, navButton) {
+                    let maxWidth = 0;
+                    let previousWidth = 0;
+                    let mutationCount = 0;
+                    let lastMutationTime = Date.now();
+                    let cachedProgressBarElement = progressBarElement;
+                    state.observer = new MutationObserver(mutations => {
+                        mutationCount++;
+                        lastMutationTime = Date.now();
+                        mutations.forEach(mutation => {
+                            if (mutation.attributeName === 'aria-valuetext' && state.isSkippingEnabled) {
+                                // Use cached element reference, no re-querying on mutations
+                                let ariaValueText = cachedProgressBarElement.getAttribute('aria-valuetext');
+                                if (ariaValueText) {
+                                    let widthNumber = parseFloat(ariaValueText.replace('%', ''));
+                                    if (widthNumber >= maxWidth) {
+                                        maxWidth = widthNumber;
+                                        previousWidth = widthNumber;
+                                    } else if (!state.isClicked) {
+                                        if ((widthNumber === 0 || widthNumber === 1) && previousWidth >= 97) {
+                                            utils.pauseVideo();
+                                            state.navigationButtonDown.click();
+                                            state.isClicked = true;
+                                            state.observer.disconnect();
+                                            state.observer = null;
+                                            state.observerShortsId = null;
+                                            maxWidth = 0;
+                                            previousWidth = 0;
+                                        } else {
+                                            previousWidth = widthNumber;
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    });
+
+                    state.observer.observe(cachedProgressBarElement, {
+                        attributes: true,
+                        attributeFilter: ['aria-valuetext'],
+                    });
+                    state.observerShortsId = currentShortsId;
+
+                    // Monitor if observer is capturing updates
+                    setTimeout(() => {
+                        if (Date.now() - lastMutationTime > 2000 && state.observer && state.observerShortsId === currentShortsId) {
+                            console.warn("Observer not capturing progress bar, reinitializing...");
+                            state.observer.disconnect();
+                            state.observer = null;
+                            state.observerShortsId = null;
+                            attemptObserverSetup(navButton);
+                        }
+                    }, 2500); // Check after 2.5s
+                }
+
+                // Function to validate and re-query element on navigation events
+                function revalidateProgressBarElement(navButton) {
+                    const currentProgressBar = document.querySelector(CONFIG.selectors.shortsProgressBar);
+
+                    if (!currentProgressBar) {
+                        // Element not found, reinitialize
+                        if (state.observer) {
+                            state.observer.disconnect();
+                            state.observer = null;
+                            state.observerShortsId = null;
+                        }
+                        attemptObserverSetup(navButton);
+                        return;
+                    }
+
+                    // Element found, check if we need to update observer
+                    if (state.observerShortsId !== currentShortsId || !state.observer) {
+                        if (state.observer) {
+                            state.observer.disconnect();
+                            state.observer = null;
+                        }
+                        initializeObserver(currentProgressBar, navButton);
+                    }
+                }
+
+                // Function to attempt observer setup with polling
+                function attemptObserverSetup(navButton) {
+                    const progressBarSelector = CONFIG.selectors.shortsProgressBar;
+                    utils.waitForElement(progressBarSelector, { timeout: 8000, interval: 150 })
+                        .then(progressBarElement => {
+                            if (progressBarElement) {
+                                initializeObserver(progressBarElement, navButton);
+                            }
+                        })
+                        .catch(err => {
+                            console.error(`Failed to find progress bar (1st attempt): ${err.message}`);
+                            // Retry with even longer timeout
+                            setTimeout(() => {
+                                utils.waitForElement(progressBarSelector, { timeout: 10000, interval: 200 })
+                                    .then(progressBarElement => {
+                                        if (progressBarElement) {
+                                            initializeObserver(progressBarElement, navButton);
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error(`Failed to find progress bar (2nd attempt): ${err.message}`);
+                                        // Final retry after additional delay
+                                        setTimeout(() => {
+                                            utils.waitForElement(progressBarSelector, { timeout: 12000, interval: 250 })
+                                                .then(progressBarElement => {
+                                                    if (progressBarElement) {
+                                                        initializeObserver(progressBarElement, navButton);
+                                                    }
+                                                })
+                                                .catch(err => console.error(`Final retry also failed: ${err.message}`));
+                                        }, 1000);
+                                    });
+                            }, 800);
+                        });
+                }
+
+                // Add delay to allow new short's DOM to load, then fetch elements
+                // Increased delay for slower DOM rendering
+                setTimeout(() => {
+                    // Clear DOM cache to force fresh queries
+                    Core.cache.delete(CONFIG.selectors.shortsNavDown);
+                    Core.cache.delete(CONFIG.selectors.shortsProgressBar);
+
+                    utils.waitForAllDOMElements(selectors, { timeout: 15000, maxRetries: 5 })
+                        .then(results => {
+                            const navButton = results[selectors[0]].element;
+                            const progressBarElement = results[selectors[1]].element;
+
+                            if (!state.hasNavigationButtonBeenFetched) {
+                                state.navigationButtonDown = navButton;
+                                state.hasNavigationButtonBeenFetched = true;
+
+                                state.navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
+                                    if (!e.isTrusted) return;
+                                    state.navigationButtonDown.removeEventListener('click', observerReinitHandler);
+                                    if (state.observer) {
+                                        state.observer.disconnect();
+                                        state.observer = null;
+                                        state.observerShortsId = null;
+                                    }
+                                    // Revalidate element on button click
+                                    revalidateProgressBarElement(navButton);
+                                });
+                            }
+
+                            initializeObserver(progressBarElement, navButton);
+                        })
+                        .catch(err => {
+                            console.error(`waitForAllDOMElements failed: ${err.message}. Attempting aggressive fallback...`);
+                            // Aggressive fallback with longer timeouts
+                            utils.waitForElement(CONFIG.selectors.shortsNavDown, { timeout: 8000, interval: 150 })
+                                .then(navButton => {
+                                    if (navButton && !state.hasNavigationButtonBeenFetched) {
+                                        state.navigationButtonDown = navButton;
+                                        state.hasNavigationButtonBeenFetched = true;
+
+                                        state.navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
+                                            if (!e.isTrusted) return;
+                                            state.navigationButtonDown.removeEventListener('click', observerReinitHandler);
+                                            if (state.observer) {
+                                                state.observer.disconnect();
+                                                state.observer = null;
+                                                state.observerShortsId = null;
+                                            }
+                                            revalidateProgressBarElement(navButton);
+                                        });
+                                    }
+                                    // Attempt progress bar setup with aggressive polling
+                                    attemptObserverSetup(navButton);
+                                })
+                                .catch(fallbackErr => {
+                                    console.error(`Fallback nav button lookup failed: ${fallbackErr.message}`);
+                                    // Last resort: retry with even longer timeout
+                                    setTimeout(() => {
+                                        utils.waitForElement(CONFIG.selectors.shortsProgressBar, { timeout: 10000, interval: 200 })
+                                            .then(progressBar => {
+                                                if (progressBar) {
+                                                    initializeObserver(progressBar, state.navigationButtonDown || null);
+                                                }
+                                            })
+                                            .catch(lastErr => console.error(`Last resort failed: ${lastErr.message}`));
+                                    }, 1500);
+                                });
+                        });
+                }, 800); // Increased delay for new short's DOM to load
+            }
+        }
+
+        function handleKeyEvent(event) {
+            if (!utils.checkIfShortsPage()) return;
+            const now = Date.now();
+            if ((event.keyCode === 38 || event.keyCode === 40) && now - state.lastKeyEvent > state.debounceDelay) {
+                state.lastKeyEvent = now;
+                const currentShortsId = utils.getShortsId();
+                if (currentShortsId !== state.observerShortsId) {
+                    // Re-query elements on keyboard navigation
+                    initializeShortsObserver();
+                }
+            }
+        }
+
+        function removeToggleButton() {
+            const toggleButton = document.querySelector('#shorts-skip-toggle');
+            if (toggleButton && toggleButton.parentNode) {
+                toggleButton.dispatchEvent(new Event('remove'));
+                toggleButton.parentNode.removeChild(toggleButton);
+            }
+        }
+
+        function cleanup() {
+            if (state.observer) {
+                state.observer.disconnect();
+                state.observer = null;
+            }
+            removeToggleButton();
+        }
+
+        return { createShortsSkipBtn, initializeShortsObserver, skippingShortsMechanism, handleKeyEvent, removeToggleButton, cleanup };
+    })();
+
+    // Watch - optimizat cu caching agresiv
+    const Watch = (function () {
+        const { state, utils, playerElementsCache } = Core;
+        let miniPlayerInitialized = false;
+        let wasAbove1000 = false;
+        let scrubberEnforceObserver = null;
+        const originalStyles = new Map();
+
+        function calculatePosition(w) {
+            let position;
+            if ((window.screen.width >= CONFIG.miniPlayer.positionMinUHD && window.screen.width <= CONFIG.miniPlayer.positionMaxUHD)) {
+                console.log('UHD detected for mini player positioning');
+                position = Math.max(710, Math.min(1820, CONFIG.miniPlayer.positionFactorUHD * (w - 900) + 900));
+            } else {
+                console.log('Default settings for mini player positioning');
+                position = Math.max(400, Math.min(1265, CONFIG.miniPlayer.positionFactorDefault * (w - 985) + 100));
+            }
+            return position;
+        }
+
+        function stopScrubberEnforcer() {
+            if (scrubberEnforceObserver) {
+                console.log("Enforcer found and destroyed");
+                scrubberEnforceObserver.disconnect();
+                scrubberEnforceObserver = null;
+            }
+        }
+
+        function resetMiniPlayer() {
+            stopScrubberEnforcer();
+            const player = document.querySelector("#player");
+            const moviePlayer = document.querySelector("#movie_player");
+            const video = document.querySelector("video.html5-main-video");
+            const chromeBottom = document.querySelector(".ytp-chrome-bottom");
+            const progressContainer = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-heat-map-container");
+            const progressBar = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar");
+            const chapterContainer = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar > div.ytp-chapters-container > div");
+            const scrubber = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar > div.ytp-scrubber-container");
+            const nextbtn = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > a.ytp-next-button.ytp-button.ytp-playlist-ui")
+            const buttonsvg = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > button > svg");
+
+            if (player) {
+                player.classList.remove(
+                    'ytp-delhi-modern-compact-controls',
+                    'ytp-rounded-miniplayer-not-regular-wide-video',
+                    'playing-mode'
+                );
+            }
+
+            // Restore original styles instead of clearing them
+            const elementsToRestore = [
+                { el: video, id: 'video' },
+                { el: moviePlayer, id: 'moviePlayer' },
+                { el: chromeBottom, id: 'chromeBottom' },
+                { el: progressContainer, id: 'progressContainer' },
+                { el: progressBar, id: 'progressBar' },
+                { el: scrubber, id: 'scrubber' },
+                { el: buttonsvg, id: 'buttonsvg' },
+                { el: chapterContainer, id: 'chapterContainer' }
+            ];
+
+            elementsToRestore.forEach(({ el, id }) => {
+                if (el && originalStyles.has(id)) {
+                    el.style.cssText = originalStyles.get(id);
                 }
             });
-        }
-    }
-}
 
-// Small Helper Functions
-function checkIfWatchPage() {
-    return window.location.href.includes('youtube.com/watch');
-}
-function checkIfShortsPage() {
-    return window.location.href.includes('youtube.com/shorts');
-}
-function dispatchSpacebarEvent() {
-    const spacebarEvent = new KeyboardEvent('keydown', {
-        key: ' ',
-        code: 'Space',
-        keyCode: 32,
-        bubbles: true,
-        cancelable: true,
-    });
-    document.dispatchEvent(spacebarEvent);
-}
-// Function to remove the toggle button from YT Shorts Page
-function removeToggleButton() {
-    const toggleButton = document.getElementById('shorts-skip-toggle');
-    if (toggleButton && toggleButton.parentNode) {
-        toggleButton.dispatchEvent(new Event('remove'));
-        toggleButton.parentNode.removeChild(toggleButton);
-    }
-    const toggleStyles = document.getElementById('toggleStyles');
-    if (toggleStyles && toggleStyles.parentNode) {
-        toggleStyles.parentNode.removeChild(toggleStyles);
-    }
-}
-// Function to check for URL changes when the page is not a Shorts page and remove the toggle button
-function checkUrlChange() {
-    const currentUrl = window.location.href;
-    if (currentUrl !== lastUrl) {
-        lastUrl = currentUrl;
-        if (!currentUrl.includes('youtube.com/shorts')) {
-            removeToggleButton();
-            if (observer) {
-                observer.disconnect();
+            // Also remove custom CSS properties from player
+            if (player) {
+                const storedPlayerStyles = originalStyles.get('player');
+                if (storedPlayerStyles) {
+                    player.style.cssText = storedPlayerStyles;
+                }
             }
-        } else {
-            console.log('The Shorts Script is working');
-            SkippingShorts();
-            addToggleButton();
+
+            if (nextbtn) {
+                nextbtn.removeAttribute('style');
+            }
+
+            // Remove custom property from document root
+            document.documentElement.style.removeProperty('--efyt-mini-left');
+
+            document.body.classList.remove('efyt-mini-player');
+            document.body.classList.remove('efyt-mini-active');
+            wasAbove1000 = false;
         }
-    }
-    setTimeout(checkUrlChange, 500);
-}
 
-// Event Listeners with Debouncing
-let lastWheelEvent = 0;
-let lastKeyEvent = 0;
-const debounceDelay = 1000;
+        function activateMiniPlayer() {
+            const viewportWidth = window.innerWidth;
+            const position = calculatePosition(viewportWidth);
+            const player = document.querySelector("#player");
+            const moviePlayer = document.querySelector("#movie_player");
+            const video = document.querySelector("video.html5-main-video");
+            const chromeBottom = document.querySelector(".ytp-chrome-bottom");
+            const progressContainer = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-heat-map-container");
+            const progressBar = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar");
+            const chapterContainer = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar > div.ytp-chapters-container > div");
+            const scrubber = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar > div.ytp-scrubber-container");
 
-document.addEventListener('wheel', function (event) {
-    const now = Date.now();
-    if (event.deltaY < 0 || event.deltaY > 0) {
-        lastWheelEvent = now;
-        if (observer) {
-            observer.disconnect();
+            const buttonsvg = document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > button > svg");
+
+            // Store original styles before modifying (only once per activation)
+            if (!originalStyles.has('player') && player) {
+                originalStyles.set('player', player.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('moviePlayer') && moviePlayer) {
+                originalStyles.set('moviePlayer', moviePlayer.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('video') && video) {
+                originalStyles.set('video', video.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('chromeBottom') && chromeBottom) {
+                originalStyles.set('chromeBottom', chromeBottom.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('progressContainer') && progressContainer) {
+                originalStyles.set('progressContainer', progressContainer.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('progressBar') && progressBar) {
+                originalStyles.set('progressBar', progressBar.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('scrubber') && scrubber) {
+                originalStyles.set('scrubber', scrubber.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('buttonsvg') && buttonsvg) {
+                originalStyles.set('buttonsvg', buttonsvg.getAttribute('style') || '');
+            }
+            if (!originalStyles.has('chapterContainer') && chapterContainer) {
+                originalStyles.set('chapterContainer', chapterContainer.getAttribute('style') || '');
+            }
+
+            document.documentElement.style.setProperty('--efyt-mini-left', `${position}px`);
+
+            if (player) {
+                Object.assign(player.style, {
+                    '--yt-delhi-pill-height': '40px',
+                    '--yt-delhi-pill-top-height': '8px',
+                    '--yt-delhi-bottom-controls-height': '56px',
+                    '--yt-delhi-bottom-controls-height-xsmall-width-mode': '56px',
+                    '--yt-delhi-big-mode-pill-height': '48px',
+                    '--yt-delhi-big-mode-pill-top-height': '12px',
+                    '--yt-delhi-big-mode-bottom-controls-height': '72px'
+                });
+            }
+
+            if (moviePlayer) {
+                Object.assign(moviePlayer.style, {
+                    width: `${CONFIG.miniPlayer.width}px`,
+                    height: `${CONFIG.miniPlayer.height}px`,
+                    left: `${position}px`,
+                    top: `${CONFIG.miniPlayer.top}px`,
+                    borderRadius: "15px",
+                });
+            }
+
+            if (video) {
+                Object.assign(video.style, {
+                    width: `${CONFIG.miniPlayer.width}px`,
+                    height: `${CONFIG.miniPlayer.height}px`,
+                    left: "0px",
+                    borderRadius: "15px",
+                });
+            }
+
+            if (chromeBottom) {
+                Object.assign(chromeBottom.style, {
+                    left: "10px",
+                    width: "98%",
+                    maxWidth: `${CONFIG.miniPlayer.width - 30}px`,
+                });
+            }
+
+            if (progressBar) {
+                Object.assign(progressBar.style, {
+                    width: `${CONFIG.miniPlayer.width - 30}px !important`,
+                });
+            }
+
+            if (progressContainer) {
+                Object.assign(progressContainer.style, {
+                    zIndex: "60",
+                    bottom: "0",
+                    height: "60px",
+                });
+            }
+
+            if (chapterContainer) {
+                Object.assign(chapterContainer.style, {
+                    width: "99%",
+                });
+            }
+
+            if (scrubber && progressBar) {
+                // Set up observer for scrubber position enforcement
+                if (scrubberEnforceObserver) {
+                    scrubberEnforceObserver.disconnect();
+                }
+                scrubberEnforceObserver = new MutationObserver(() => {
+                    const cur = Number(progressBar.getAttribute("aria-valuenow") || 0);
+                    const tot = Number(progressBar.getAttribute("aria-valuemax") || 100);
+                    const computedW = progressBar.getBoundingClientRect().width;
+                    const xPos = (cur / tot) * computedW;
+                    scrubber.style.cssText = `transform: translateX(${xPos}px) !important;`;
+                });
+                scrubberEnforceObserver.observe(progressBar, {
+                    attributes: true,
+                    attributeFilter: ['aria-valuenow', 'aria-valuemax'],
+                    subtree: false
+                });
+            }
+
+            if (buttonsvg) {
+                Object.assign(buttonsvg.style, {
+                    padding: "12px !important",
+                });
+            }
+
+            player.classList.add('efyt-reinit');
+            void player.offsetHeight;
+            player.classList.remove('efyt-reinit');
+
+            player.classList.add(
+                'ytp-delhi-modern-compact-controls',
+                'ytp-rounded-miniplayer-not-regular-wide-video',
+                'playing-mode'
+            );
+            document.body.classList.add('efyt-mini-player');
+            document.body.classList.add('efyt-mini-active');
         }
-        restartObserver();
-    }
-});
 
-document.addEventListener('keydown', function (event) {
-    const now = Date.now();
-    if (event.keyCode === 38 || event.keyCode === 40) {
-        lastKeyEvent = now;
-        if (observer) {
-            observer.disconnect();
+        function handleScroll(scrollY) {
+            const scrollContainer = document.getElementById('scroll-top-container');
+            if (scrollContainer) {
+                scrollContainer.style.opacity = (scrollY > CONFIG.miniPlayer.scrollThreshold && utils.checkIfWatchPage()) ? '1' : '0';
+            }
+
+            const currentScroll = scrollY > CONFIG.miniPlayer.scrollThreshold;
+            if (currentScroll !== wasAbove1000) {
+                wasAbove1000 = currentScroll;
+                if (currentScroll) {
+                    activateMiniPlayer();
+                    state.isMiniPlayerActive = true;
+                } else {
+                    resetMiniPlayer();
+                    state.isMiniPlayerActive = false;
+                }
+            }
         }
-        restartObserver();
+
+        function createScrollToTopBtn() {
+            let scrollTopContainer = document.getElementById('scroll-top-container');
+            if (!scrollTopContainer) {
+                const buttonPosition = calculatePosition(window.innerWidth) + CONFIG.miniPlayer.width - 50;
+                scrollTopContainer = document.createElement('div');
+                scrollTopContainer.id = 'scroll-top-container';
+                scrollTopContainer.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    width: 55px;
+                    height: 55px;
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                `;
+                scrollTopContainer.style.left = `${buttonPosition}px`;
+
+                const button = document.createElement('button');
+                button.className = 'scroll-top-btn';
+                const scrollUpDiv = document.createElement('div');
+                scrollUpDiv.className = 'scroll-up-btn';
+                scrollUpDiv.style.color = 'red';
+                scrollUpDiv.style.position = 'relative';
+                scrollUpDiv.style.top = '-2px';
+                //scrollUpDiv.textContent = '⮝'; -this arrow require 32px font size and -3px top
+                scrollUpDiv.textContent = '🡩';
+                scrollUpDiv.style.fontSize = '24px';
+                button.appendChild(scrollUpDiv);
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'scroll-tooltip';
+                tooltip.textContent = 'Scroll to Top';
+                tooltip.setAttribute('role', 'tooltip');
+                tooltip.setAttribute('aria-label', 'Scroll to Top');
+
+                button.addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                scrollTopContainer.appendChild(button);
+                scrollTopContainer.appendChild(tooltip);
+                document.body.appendChild(scrollTopContainer);
+                state.isScrollButtonCreated = true;
+            }
+        }
+
+        function removeScrollButton() {
+            const scrollTopContainer = document.getElementById('scroll-top-container');
+            if (scrollTopContainer) {
+                scrollTopContainer.remove();
+                state.isScrollButtonCreated = false;
+            }
+        }
+
+        function cleanup() {
+            stopScrubberEnforcer();
+            resetMiniPlayer();
+            removeScrollButton();
+            playerElementsCache.clear();
+            originalStyles.clear();
+            miniPlayerInitialized = false;
+        }
+
+        return { handleScroll, createScrollToTopBtn, removeScrollButton, cleanup, calculatePosition };
+    })();
+
+    // MainPage
+    const MainPage = (function () {
+        const { utils } = Core;
+
+        function updateGrid() {
+            utils.waitForElement(CONFIG.selectors.gridRenderer).then(grid => {
+                grid.style.setProperty('--ytd-rich-grid-items-per-row', '4', '!important');
+            }).catch(() => { });
+        }
+
+        return { updateGrid };
+    })();
+
+    // Navigation - selective cache clear
+    const Navigation = (function () {
+        const { state, cache, utils } = Core;
+
+        function handleChange() {
+            const url = window.location.href;
+            if (url === state.lastUrl) return;
+            state.lastUrl = url;
+
+            const relevantSelectors = [CONFIG.selectors.mastheadCenter, CONFIG.selectors.mastheadContainer];
+            relevantSelectors.forEach(selector => cache.delete(selector));
+
+            if (utils.checkIfShortsPage()) {
+                console.log("Shorts Page Active");
+                Shorts.createShortsSkipBtn();
+                Shorts.skippingShortsMechanism();
+                Watch.cleanup();
+            } else if (utils.checkIfWatchPage()) {
+                Watch.createScrollToTopBtn();
+                Layout.updateWatchStyles();
+                Layout.initMastheadCache();
+                MainPage.updateGrid();
+                Shorts.cleanup();
+            } else {
+                Watch.cleanup();
+                Shorts.cleanup();
+            }
+
+            Layout.updateMasthead(window.scrollY);
+        }
+
+        return { handleChange };
+    })();
+
+    // Global Events
+    const throttledScroll = Core.utils.throttle((e) => {
+        Layout.updateMasthead();
+
+        if (Core.utils.checkIfWatchPage()) {
+            Watch.handleScroll(window.scrollY);
+        }
+    }, 60);
+
+    const debouncedResize = Core.utils.debounce(() => {
+        Layout.updateMasthead(Core.state.lastScrollY);
+        Layout.updateWatchStyles();
+
+        if (Core.utils.checkIfWatchPage()) {
+            const newLeft = Watch.calculatePosition(window.innerWidth);
+            if (Math.abs(newLeft - Core.state.lastMiniLeft) > 5) {
+                Core.state.lastMiniLeft = newLeft;
+            }
+        }
+    }, 120);
+
+     window.addEventListener('scroll', Core.utils.debounce((e) => {
+        Layout.updateMasthead();
+        if (Core.utils.checkIfWatchPage()) {
+            Watch.handleScroll(window.scrollY);
+        }
+    }, 50));
+    window.addEventListener('resize', debouncedResize);
+    window.addEventListener('popstate', Navigation.handleChange);
+    document.addEventListener('keydown', (e) => Shorts.handleKeyEvent(e));
+
+    // Init
+    Layout.initMastheadCache();
+    MainPage.updateGrid();
+
+    const titleObserver = new MutationObserver(Core.utils.debounce(() => {
+        Navigation.handleChange();
+        console.log("URL Observed");
+    }, 30));
+    const titleElement = document.querySelector('title');
+    if (titleElement) {
+        titleObserver.observe(titleElement, { childList: true });
     }
-});
-
-//Event Listeners
-window.addEventListener('load', updatePageElements);
-window.addEventListener('load', adjustTopBarElements);
-window.addEventListener('load', createScrollToTopButton);
-window.addEventListener('load', addToggleButton);
-window.addEventListener('popstate', updatePageElements);
-window.addEventListener('popstate', createScrollToTopButton);
-window.addEventListener('popstate', addToggleButton);
-window.addEventListener('resize', adjustTopBarElements);
-window.addEventListener('resize', updatePageElements);
-window.addEventListener('resize', createScrollToTopButton);
-window.addEventListener('resize', addToggleButton);
-window.addEventListener('scroll', updatePageElements);
-window.addEventListener('scroll', createScrollToTopButton);
-window.addEventListener('scroll', adjustTopBarElements);
-window.addEventListener('DOMContentLoaded', checkUrlChange);
-
-// Initial function calls
-updatePageElements();
-adjustTopBarElements();
-checkUrlChange();
-createScrollToTopButton();
+})();
