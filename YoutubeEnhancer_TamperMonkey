@@ -271,6 +271,9 @@
             .ytp-big-mode .ytp-progress-bar-container {
                 bottom: 65.5px !important;
             }
+            #contents.ytd-rich-grid-renderer {
+                padding-top: 65px;
+            }
 
             ytd-rich-grid-renderer {
                 --ytd-rich-grid-items-per-row: var(--efyt-grid-columns, 5) !important;
