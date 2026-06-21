@@ -1,6 +1,21 @@
 (function () {
     'use strict';
 
+    // Trusted Types policy (bypass YouTube's CSP that blocks innerHTML)
+    const TT = (function() {
+        if (window.trustedTypes && trustedTypes.createPolicy) {
+            try {
+                return trustedTypes.createPolicy('efyt-html', {
+                    createHTML: (s) => s
+                });
+            } catch (e) {
+                // Policy name collision - use default
+                return { createHTML: (s) => s };
+            }
+        }
+        return { createHTML: (s) => s };
+    })();
+
     // CONFIG - toate constantele centralizate
     const CONFIG = {
         masthead: {
@@ -11,8 +26,9 @@
         },
         watch: {
             topBarHeightPx: 56,
-            defaultMaxWidthPrimary: 1820,
-            defaultMaxWidthColumns: 2200,
+            defaultMaxWidthPrimary: 77,
+            defaultMaxWidthColumns: 98,
+            defaultMaxWidthSecondary: 23,
             uhd: {
                 minWidth: 2560, minHeight: 1440,
                 maxWidth: 3840, maxHeight: 2160,
@@ -48,8 +64,7 @@
     const Core = (function () {
         const state = {
             isSkippingEnabled: true,
-            hasNavigationButtonBeenFetched: false,
-            navigationButtonDown: null,
+
             lastShortsId: null,
             observer: null,
             observerShortsId: null,
@@ -216,8 +231,7 @@
                 border-radius: 30px;
                 display: flex;
                 position: static;
-                margin: 0 10%;
-                border: 1px dotted red;
+                margin: var(--efyt-masthead-margin, 0 10%);
                 background-color: var(--light-bt);
             }
             .ytSearchboxComponentHost {
@@ -226,13 +240,16 @@
             }
             .ytSearchboxComponentInputBox {
                 margin: 0 0 0 0;
-                border: 1px dotted red;
                 box-shadow: none;
                 height: 50px;
                 background: transparent;
                 background-color: var(--light-bt);
                 display: flex;
+                border: none;
                 justify-content: space-around;
+            }
+            .ytSearchboxComponentSearchButtonDark {
+                border: none;
             }
             #center.ytd-masthead {
                 margin: auto;
@@ -244,8 +261,9 @@
             .ytp-big-mode .ytp-progress-bar-container {
                 bottom: 65.5px !important;
             }
+
             ytd-rich-grid-renderer {
-                --ytd-rich-grid-items-per-row: 4 !important;
+                --ytd-rich-grid-items-per-row: var(--efyt-grid-columns, 5) !important;
             }
             #container.ytd-masthead {
                 box-shadow: none;
@@ -255,16 +273,13 @@
                 z-index: 1000;
                 justify-content: space-evenly;
             }
-            #contents.ytd-rich-grid-renderer {
-                padding-top: 65px;
-            }
+
             ytd-watch-flexy[flexy] #secondary.ytd-watch-flexy {
                 min-width: 450px;
                 padding-right: 0px;
             }
             .ytSearchboxComponentSearchButton {
                 background: transparent;
-                border: 1px dotted red;
                 background-color: var(--light-bt) !important;
                 height: 52px;
             }
@@ -274,7 +289,7 @@
                 visibility: visible;
                 background: transparent;
                 height: 56px;
-                z-index -1;
+                z-index: -1;
             }
             #search-form.ytd-searchbox {
                 height: 50px;
@@ -319,7 +334,6 @@
                 color: var(--yt-spec-text-primary);
             }
             .ytSpecTouchFeedbackShapeHost:where([class="ytSpecTouchFeedbackShapeHost ytSpecTouchFeedbackShapeTouchResponse"]) {
-                border: 1px dotted red;
             }
             body.efyt-mini-player.efyt-short #movie_player:not(.ytp-fullscreen) video.html5-main-video,
             body.efyt-wide-player.efyt-mini-player.efyt-short ytd-watch-flexy[theater] #movie_player:not(.ytp-fullscreen) video.html5-main-video {
@@ -406,8 +420,8 @@
                 height: 100%;
                 border-radius: 50%;
                 cursor: pointer;
-                border: 1px dotted red;
                 display: flex;
+                border: none;
                 justify-content: center;
                 align-items: center;
                 background-color: var(--light-bt);
@@ -502,10 +516,176 @@
                 opacity: 1;
                 visibility: visible;
             }
+        /* ===== Settings Panel ===== */
+            #efyt-gear-btn {
+                width: 40px !important;
+                height: 40px !important;
+                min-width: 40px !important;
+                border-radius: 50% !important;
+                border: none !important;
+                cursor: pointer !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: transparent !important;
+                transition: background 0.2s;
+                margin: auto 4px !important;
+                font-size: 20px;
+                color: #c00;
+                opacity: 0.85;
+                padding: 0;
+                position: relative;
+                outline: none;
+                line-height: 1;
+                box-sizing: border-box;
+            }
+            #efyt-gear-btn svg {
+                width: 20px;
+                height: 20px;
+                fill: #c00;
+            }
+            #efyt-gear-btn:hover {
+                background: var(--light-bt-hover) !important;
+                opacity: 1;
+            }
+            @media (prefers-color-scheme: dark) {
+                #efyt-gear-btn:hover {
+                    background: var(--dark-bt-hover);
+                }
+            }
+            #efyt-settings-panel {
+                position: fixed;
+                top: 60px;
+                right: 80px;
+                width: 320px;
+                max-height: 80vh;
+                overflow-y: auto;
+                background: var(--yt-spec-base-background, #fff);
+                border: 1px solid var(--yt-spec-text-disabled, #ccc);
+                border-radius: 12px;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+                z-index: 9999;
+                padding: 16px 20px;
+                font-family: 'Roboto', Arial, sans-serif;
+                font-size: 14px;
+                color: var(--yt-spec-text-primary, #0f0f0f);
+                display: none;
+            }
+            #efyt-settings-panel.efyt-open {
+                display: block;
+            }
+            #efyt-settings-panel h3 {
+                margin: 0 0 16px 0;
+                font-size: 16px;
+                font-weight: 500;
+                border-bottom: 1px solid var(--yt-spec-text-disabled, #ddd);
+                padding-bottom: 10px;
+            }
+            .efyt-setting-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border-bottom: 1px solid var(--yt-spec-text-disabled, #eee);
+            }
+            .efyt-setting-row:last-of-type {
+                border-bottom: none;
+            }
+            .efyt-setting-label {
+                font-size: 14px;
+                font-weight: 400;
+            }
+            .efyt-setting-desc {
+                font-size: 12px;
+                color: var(--yt-spec-text-secondary, #666);
+                margin-top: 2px;
+            }
+            .efyt-setting-row select {
+                padding: 4px 8px;
+                border-radius: 4px;
+                border: 1px solid var(--yt-spec-text-disabled, #ccc);
+                background: var(--yt-spec-base-background, #fff);
+                color: var(--yt-spec-text-primary, #0f0f0f);
+                font-size: 13px;
+            }
+            .efyt-setting-row input[type="number"] {
+                width: 70px;
+                padding: 4px 8px;
+                border-radius: 4px;
+                border: 1px solid var(--yt-spec-text-disabled, #ccc);
+                background: var(--yt-spec-base-background, #fff);
+                color: var(--yt-spec-text-primary, #0f0f0f);
+                font-size: 13px;
+                text-align: center;
+            }
+            .efyt-toggle-track {
+                width: 36px;
+                height: 20px;
+                border-radius: 10px;
+                background: var(--yt-spec-text-disabled, #ccc);
+                position: relative;
+                cursor: pointer;
+                transition: background 0.2s;
+                flex-shrink: 0;
+            }
+            .efyt-toggle-track.efyt-on {
+                background: #c00;
+            }
+            .efyt-toggle-knob {
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: white;
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                transition: left 0.2s;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            }
+            .efyt-toggle-track.efyt-on .efyt-toggle-knob {
+                left: 18px;
+            }
+            #efyt-save-btn {
+                display: block;
+                width: 100%;
+                margin-top: 16px;
+                padding: 10px;
+                border: none;
+                border-radius: 8px;
+                background: #c00;
+                color: white;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            #efyt-save-btn:hover {
+                background: #a00;
+            }
+
+            /* Fixed masthead (absolute = scrolls away) */
+            html[data-efyt-masthead="fixed"] #masthead-container.ytd-app {
+                position: absolute !important;
+            }
+            html[data-efyt-masthead="fixed"][data-efyt-scrolled="true"] #scroll-container.ytd-feed-filter-chip-bar-renderer {
+                transform: translateY(-56px);
+            }
+            html[data-efyt-masthead="fixed"][data-efyt-scrolled="true"] #frosted-glass.with-chipbar.ytd-app {
+                top: -56px !important;
+            }
+
+            /* Data-attribute controlled red borders */
+            html[data-efyt-borders="on"] #start.ytd-masthead,
+            html[data-efyt-borders="on"] #end.ytd-masthead,
+            html[data-efyt-borders="on"] .ytSearchboxComponentInputBox,
+            html[data-efyt-borders="on"] .ytSearchboxComponentSearchButton,
+            html[data-efyt-borders="on"] .ytSpecTouchFeedbackShapeHost:where([class="ytSpecTouchFeedbackShapeHost ytSpecTouchFeedbackShapeTouchResponse"]),
+            html[data-efyt-borders="on"] .scroll-top-btn {
+                border: 1px dotted red !important;
+            }
         `;
     })();
 
-    // Layout - optimizat fără redundanțe
     const Layout = (function () {
         const { utils, state } = Core;
         let mastheadCacheInitialized = false;
@@ -542,11 +722,13 @@
         function getWatchMaxWidths() {
             let primW = CONFIG.watch.defaultMaxWidthPrimary;
             let colW = CONFIG.watch.defaultMaxWidthColumns;
+            let secW = CONFIG.watch.defaultMaxWidthSecondary;
             const sw = window.screen.width, sh = window.screen.height;
             if (sw >= CONFIG.watch.uhd.minWidth && sw <= CONFIG.watch.uhd.maxWidth &&
                 sh >= CONFIG.watch.uhd.minHeight && sh <= CONFIG.watch.uhd.maxHeight) {
                 primW = CONFIG.watch.uhd.maxWidthPrimary;
                 colW = CONFIG.watch.uhd.maxWidthColumns;
+                secW = CONFIG.watch.defaultMaxWidthSecondary;
             }
             return { primW, colW };
         }
@@ -558,17 +740,20 @@
             if (Math.abs(parseFloat(newHeight) - parseFloat(state.lastHeightVh)) <= CONFIG.watch.heightChangeThreshold) return;
             state.lastHeightVh = newHeight;
 
-            const { primW, colW } = getWatchMaxWidths();
+            const { primW, colW, secW } = getWatchMaxWidths();
 
             const css = `
                 #primary.ytd-watch-flexy {
-                    max-width: ${primW}px !important;
+                    min-width: ${primW}% !important;
                     margin-left: 10px !important;
                     margin-top: 12px !important;
                 }
                 #columns.ytd-watch-flexy {
-                    max-width: ${colW}px !important;
+                    max-width: ${colW}% !important;
                 }
+                #secondary.ytd-watch-flexy {
+                  max-width: ${secW}% !important;
+                 }
                 ytd-watch-flexy[full-bleed-player][respect-aspect-ratio]:not([fullscreen]) #full-bleed-container.ytd-watch-flexy,
                 ytd-watch-flexy[full-bleed-player] #full-bleed-container.ytd-watch-flexy {
                     z-index: 1200 !important;
@@ -599,7 +784,6 @@
         return { initMastheadCache, updateMasthead, updateWatchStyles };
     })();
 
-    // Shorts - optimizat cu observer unic
     const Shorts = (function () {
         const { state, utils } = Core;
 
@@ -633,22 +817,17 @@
             autoskipContainer.appendChild(toggleButton);
             autoskipContainer.appendChild(tooltip);
 
-            // -------------------------------
-            // Folosim waitForElement în stilul tău (cu .then + catch)
-            // -------------------------------
+
             utils.waitForElement('.navigation-container.style-scope.ytd-shorts')
                 .then(navigationContainer => {
                     return utils.waitForElement('#navigation-button-up', { timeout: 10000 });
-                    // ^ aici poți ajusta timeout-ul dacă e nevoie
                 })
                 .then(navigationButtonUp => {
-                    // Avem ambele elemente → inserăm butonul
                     const navigationContainer = navigationButtonUp.closest('.navigation-container.style-scope.ytd-shorts');
                     if (navigationContainer) {
                         navigationContainer.insertBefore(autoskipContainer, navigationButtonUp);
                     }
 
-                    // Adăugăm event listener-ul doar după ce butonul e în DOM
                     toggleButton.addEventListener('click', () => {
                         state.isSkippingEnabled = !state.isSkippingEnabled;
                         icon.textContent = state.isSkippingEnabled ? 'SKIP' : 'NO SKIP';
@@ -666,336 +845,78 @@
                         }
                     });
                 })
-                .catch(err => {
-                    // Opțional: loghezi eroarea sau ignori silențios
-                    console.warn('Nu s-a putut adăuga butonul de skip pe Shorts:', err.message);
-                    // Poți încerca o reinserare mai târziu dacă dorești (re-call createShortsSkipBtn)
-                });
-             }
+            }
         }
 
-        function initProgressBarObserver(progressBarElement, navButton) {
-            if (state.observer) {
-                state.observer.disconnect();
-            }
 
-            let maxWidth = 0;
-            let previousWidth = 0;
-            const currentShortsId = utils.getShortsId();
 
-            state.observer = new MutationObserver(mutations => {
-                if (!state.isSkippingEnabled) return;
-
-                mutations.forEach(mutation => {
-                    if (mutation.attributeName === 'aria-valuetext') {
-                        let currentProgressBar = document.querySelector(CONFIG.selectors.shortsProgressBar);
-                        if (!currentProgressBar || currentProgressBar !== progressBarElement) {
-                            if (state.observer) {
-                                state.observer.disconnect();
-                                state.observer = null;
-                            }
-                            return;
-                        }
-
-                        let ariaValueText = progressBarElement.getAttribute('aria-valuetext');
-                        if (ariaValueText) {
-                            let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                            if (widthNumber >= maxWidth) {
-                                maxWidth = widthNumber;
-                                previousWidth = widthNumber;
-                            } else if (!state.isClicked) {
-                                if ((widthNumber === 0 || widthNumber === 1) && previousWidth >= 97) {
-                                    utils.pauseVideo();
-                                    if (state.navigationButtonDown) {
-                                        state.navigationButtonDown.click();
-                                    }
-                                    state.isClicked = true;
-                                    if (state.observer) {
-                                        state.observer.disconnect();
-                                        state.observer = null;
-                                    }
-                                    maxWidth = 0;
-                                    previousWidth = 0;
-                                } else {
-                                    previousWidth = widthNumber;
-                                }
-                            }
-                        }
-                    }
-                });
-            });
-
-            if (state.isSkippingEnabled) {
-                state.observer.observe(progressBarElement, {
-                    attributes: true,
-                    attributeFilter: ['aria-valuetext'],
-                });
-            }
-            state.observerShortsId = currentShortsId;
-        }
-
-        function initializeShortsObserver() {
+        function skippingShortsMechanism() {
+            if (!utils.checkIfShortsPage()) return;
             const currentShortsId = utils.getShortsId();
 
             if (currentShortsId === state.observerShortsId && state.observer) {
                 return;
             }
 
+            if (state.observer) {
+                state.observer.disconnect();
+                state.observer = null;
+            }
+
+            state.isClicked = false;
             state.lastProcessedShortsId = currentShortsId;
 
-            const selectors = [
-                CONFIG.selectors.shortsNavDown,
-                CONFIG.selectors.shortsProgressBar
-            ];
-
-            utils.waitForAllDOMElements(selectors, { timeout: 10000, maxRetries: 2 })
-                .then(results => {
-                    const navButton = results[selectors[0]].element;
-                    const progressBarElement = results[selectors[1]].element;
-
-                    if (!state.hasNavigationButtonBeenFetched) {
-                        state.navigationButtonDown = navButton;
-                        state.hasNavigationButtonBeenFetched = true;
-                    }
-
-                    initProgressBarObserver(progressBarElement, navButton);
-                })
-                .catch(err => console.error(`Failed to initialize Shorts observer: ${err.message}`));
-        }
-
-        function skippingShortsMechanism() {
-            if (utils.checkIfShortsPage()) {
-                const currentShortsId = utils.getShortsId();
-                if (currentShortsId === state.lastProcessedShortsId && state.observer && currentShortsId === state.observerShortsId) {
-                    // Verify if observer is capturing progress bar
-                    const progressBarElement = document.querySelector(CONFIG.selectors.shortsProgressBar);
-                    if (progressBarElement && state.observer) {
-                        const ariaValueText = progressBarElement.getAttribute('aria-valuetext');
-                        if (!ariaValueText || parseFloat(ariaValueText.replace('%', '')) === 0) {
-                            // Progress bar not updating, force reinitialization
-                            state.observer.disconnect();
-                            state.observer = null;
-                            state.observerShortsId = null;
-                        } else {
-                            return; // Observer is working, no need to reinitialize
-                        }
-                    }
-                }
-                state.isClicked = false;
-                state.lastProcessedShortsId = currentShortsId;
-
-                // Disconnect existing observer immediately
-                if (state.observer) {
-                    state.observer.disconnect();
-                    state.observer = null;
-                    state.observerShortsId = null;
-                }
-
-                const selectors = [
-                    CONFIG.selectors.shortsNavDown,
-                    CONFIG.selectors.shortsProgressBar
-                ];
-
-                // Function to initialize observer for the progress bar
-                function initializeObserver(progressBarElement, navButton) {
-                    let maxWidth = 0;
-                    let previousWidth = 0;
-                    let mutationCount = 0;
-                    let lastMutationTime = Date.now();
-                    let cachedProgressBarElement = progressBarElement;
-                    state.observer = new MutationObserver(mutations => {
-                        mutationCount++;
-                        lastMutationTime = Date.now();
-                        mutations.forEach(mutation => {
-                            if (mutation.attributeName === 'aria-valuetext' && state.isSkippingEnabled) {
-                                // Use cached element reference, no re-querying on mutations
-                                let ariaValueText = cachedProgressBarElement.getAttribute('aria-valuetext');
-                                if (ariaValueText) {
-                                    let widthNumber = parseFloat(ariaValueText.replace('%', ''));
-                                    if (widthNumber >= maxWidth) {
-                                        maxWidth = widthNumber;
-                                        previousWidth = widthNumber;
-                                    } else if (!state.isClicked) {
-                                        if ((widthNumber === 0 || widthNumber === 1) && previousWidth >= 97) {
-                                            utils.pauseVideo();
-                                            state.navigationButtonDown.click();
-                                            state.isClicked = true;
-                                            state.observer.disconnect();
-                                            state.observer = null;
-                                            state.observerShortsId = null;
-                                            maxWidth = 0;
-                                            previousWidth = 0;
-                                        } else {
-                                            previousWidth = widthNumber;
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    });
-
-                    state.observer.observe(cachedProgressBarElement, {
-                        attributes: true,
-                        attributeFilter: ['aria-valuetext'],
-                    });
-                    state.observerShortsId = currentShortsId;
-
-                    // Monitor if observer is capturing updates
+            setTimeout(() => {
+                const progressBar = document.querySelector(CONFIG.selectors.shortsProgressBar);
+                if (progressBar) {
+                    setupObserver(progressBar);
+                } else {
                     setTimeout(() => {
-                        if (Date.now() - lastMutationTime > 2000 && state.observer && state.observerShortsId === currentShortsId) {
-                            console.warn("Observer not capturing progress bar, reinitializing...");
-                            state.observer.disconnect();
-                            state.observer = null;
-                            state.observerShortsId = null;
-                            attemptObserverSetup(navButton);
-                        }
-                    }, 2500); // Check after 2.5s
+                        const retryBar = document.querySelector(CONFIG.selectors.shortsProgressBar);
+                        if (retryBar) setupObserver(retryBar);
+                    }, 1000);
                 }
+            }, 500);
 
-                // Function to validate and re-query element on navigation events
-                function revalidateProgressBarElement(navButton) {
-                    const currentProgressBar = document.querySelector(CONFIG.selectors.shortsProgressBar);
+            function setupObserver(progressBarElement) {
+                let maxWidth = 0;
+                let previousWidth = 0;
 
-                    if (!currentProgressBar) {
-                        // Element not found, reinitialize
-                        if (state.observer) {
-                            state.observer.disconnect();
-                            state.observer = null;
-                            state.observerShortsId = null;
-                        }
-                        attemptObserverSetup(navButton);
-                        return;
+                state.observer = new MutationObserver(() => {
+                    if (!state.isSkippingEnabled) return;
+
+                    const ariaValueText = progressBarElement.getAttribute('aria-valuetext');
+                    if (!ariaValueText) return;
+
+                    const widthNumber = parseFloat(ariaValueText.replace('%', ''));
+
+                    if (widthNumber >= maxWidth) {
+                        maxWidth = widthNumber;
+                        previousWidth = widthNumber;
+                    } else if (!state.isClicked && (widthNumber === 0 || widthNumber === 1) && previousWidth >= 97) {
+                        // Final de video → skip la următorul shorts
+                        utils.pauseVideo();
+                        const navDown = document.querySelector(CONFIG.selectors.shortsNavDown);
+                        if (navDown) navDown.click();
+                        state.isClicked = true;
+                        // Observerul moare natural când elementul vechi e eliminat din DOM
+                        maxWidth = 0;
+                        previousWidth = 0;
+                    } else {
+                        previousWidth = widthNumber;
                     }
+                });
 
-                    // Element found, check if we need to update observer
-                    if (state.observerShortsId !== currentShortsId || !state.observer) {
-                        if (state.observer) {
-                            state.observer.disconnect();
-                            state.observer = null;
-                        }
-                        initializeObserver(currentProgressBar, navButton);
-                    }
-                }
-
-                // Function to attempt observer setup with polling
-                function attemptObserverSetup(navButton) {
-                    const progressBarSelector = CONFIG.selectors.shortsProgressBar;
-                    utils.waitForElement(progressBarSelector, { timeout: 8000, interval: 150 })
-                        .then(progressBarElement => {
-                            if (progressBarElement) {
-                                initializeObserver(progressBarElement, navButton);
-                            }
-                        })
-                        .catch(err => {
-                            console.error(`Failed to find progress bar (1st attempt): ${err.message}`);
-                            // Retry with even longer timeout
-                            setTimeout(() => {
-                                utils.waitForElement(progressBarSelector, { timeout: 10000, interval: 200 })
-                                    .then(progressBarElement => {
-                                        if (progressBarElement) {
-                                            initializeObserver(progressBarElement, navButton);
-                                        }
-                                    })
-                                    .catch(err => {
-                                        console.error(`Failed to find progress bar (2nd attempt): ${err.message}`);
-                                        // Final retry after additional delay
-                                        setTimeout(() => {
-                                            utils.waitForElement(progressBarSelector, { timeout: 12000, interval: 250 })
-                                                .then(progressBarElement => {
-                                                    if (progressBarElement) {
-                                                        initializeObserver(progressBarElement, navButton);
-                                                    }
-                                                })
-                                                .catch(err => console.error(`Final retry also failed: ${err.message}`));
-                                        }, 1000);
-                                    });
-                            }, 800);
-                        });
-                }
-
-                // Add delay to allow new short's DOM to load, then fetch elements
-                // Increased delay for slower DOM rendering
-                setTimeout(() => {
-                    // Clear DOM cache to force fresh queries
-                    Core.cache.delete(CONFIG.selectors.shortsNavDown);
-                    Core.cache.delete(CONFIG.selectors.shortsProgressBar);
-
-                    utils.waitForAllDOMElements(selectors, { timeout: 15000, maxRetries: 5 })
-                        .then(results => {
-                            const navButton = results[selectors[0]].element;
-                            const progressBarElement = results[selectors[1]].element;
-
-                            if (!state.hasNavigationButtonBeenFetched) {
-                                state.navigationButtonDown = navButton;
-                                state.hasNavigationButtonBeenFetched = true;
-
-                                state.navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
-                                    if (!e.isTrusted) return;
-                                    state.navigationButtonDown.removeEventListener('click', observerReinitHandler);
-                                    if (state.observer) {
-                                        state.observer.disconnect();
-                                        state.observer = null;
-                                        state.observerShortsId = null;
-                                    }
-                                    // Revalidate element on button click
-                                    revalidateProgressBarElement(navButton);
-                                });
-                            }
-
-                            initializeObserver(progressBarElement, navButton);
-                        })
-                        .catch(err => {
-                            console.error(`waitForAllDOMElements failed: ${err.message}. Attempting aggressive fallback...`);
-                            // Aggressive fallback with longer timeouts
-                            utils.waitForElement(CONFIG.selectors.shortsNavDown, { timeout: 8000, interval: 150 })
-                                .then(navButton => {
-                                    if (navButton && !state.hasNavigationButtonBeenFetched) {
-                                        state.navigationButtonDown = navButton;
-                                        state.hasNavigationButtonBeenFetched = true;
-
-                                        state.navigationButtonDown.addEventListener('click', function observerReinitHandler(e) {
-                                            if (!e.isTrusted) return;
-                                            state.navigationButtonDown.removeEventListener('click', observerReinitHandler);
-                                            if (state.observer) {
-                                                state.observer.disconnect();
-                                                state.observer = null;
-                                                state.observerShortsId = null;
-                                            }
-                                            revalidateProgressBarElement(navButton);
-                                        });
-                                    }
-                                    // Attempt progress bar setup with aggressive polling
-                                    attemptObserverSetup(navButton);
-                                })
-                                .catch(fallbackErr => {
-                                    console.error(`Fallback nav button lookup failed: ${fallbackErr.message}`);
-                                    // Last resort: retry with even longer timeout
-                                    setTimeout(() => {
-                                        utils.waitForElement(CONFIG.selectors.shortsProgressBar, { timeout: 10000, interval: 200 })
-                                            .then(progressBar => {
-                                                if (progressBar) {
-                                                    initializeObserver(progressBar, state.navigationButtonDown || null);
-                                                }
-                                            })
-                                            .catch(lastErr => console.error(`Last resort failed: ${lastErr.message}`));
-                                    }, 1500);
-                                });
-                        });
-                }, 800); // Increased delay for new short's DOM to load
+                state.observer.observe(progressBarElement, {
+                    attributes: true,
+                    attributeFilter: ['aria-valuetext'],
+                });
+                state.observerShortsId = currentShortsId;
             }
         }
 
-        function handleKeyEvent(event) {
-            if (!utils.checkIfShortsPage()) return;
-            const now = Date.now();
-            if ((event.keyCode === 38 || event.keyCode === 40) && now - state.lastKeyEvent > state.debounceDelay) {
-                state.lastKeyEvent = now;
-                const currentShortsId = utils.getShortsId();
-                if (currentShortsId !== state.observerShortsId) {
-                    // Re-query elements on keyboard navigation
-                    initializeShortsObserver();
-                }
-            }
+        function handleKeyEvent() {
+            // Eliminat — observerul se resetează doar la URL change (Navigation.handleChange) și final de video
         }
 
         function removeToggleButton() {
@@ -1014,10 +935,9 @@
             removeToggleButton();
         }
 
-        return { createShortsSkipBtn, initializeShortsObserver, skippingShortsMechanism, handleKeyEvent, removeToggleButton, cleanup };
+        return { createShortsSkipBtn, skippingShortsMechanism, handleKeyEvent, removeToggleButton, cleanup };
     })();
 
-    // Watch - optimizat cu caching agresiv
     const Watch = (function () {
         const { state, utils, playerElementsCache } = Core;
         let miniPlayerInitialized = false;
@@ -1183,7 +1103,7 @@
             if (chromeBottom) {
                 Object.assign(chromeBottom.style, {
                     left: "10px",
-                    width: "98%",
+                    width: "99%",
                     maxWidth: `${CONFIG.miniPlayer.width - 30}px`,
                 });
             }
@@ -1332,14 +1252,277 @@
         return { handleScroll, createScrollToTopBtn, removeScrollButton, cleanup, calculatePosition };
     })();
 
+    // Settings - persistent user config with gear icon in #end.ytd-masthead
+    const Settings = (function () {
+        const STORAGE_KEY = 'efyt-settings';
+        const DEFAULTS = {
+            gridColumns: 5,
+            redBorders: true,
+            mastheadMargin: '0 10%',
+            fixedMasthead: false
+        };
+
+        let current = { ...DEFAULTS };
+        let panelEl = null;
+        let gearEl = null;
+
+        function load() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    current = { ...DEFAULTS, ...JSON.parse(saved) };
+                }
+            } catch (e) {
+                current = { ...DEFAULTS };
+            }
+            return current;
+        }
+
+        function save(updates) {
+            current = { ...current, ...updates };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+        }
+
+        function apply() {
+            // Grid columns
+            document.documentElement.style.setProperty('--efyt-grid-columns', String(current.gridColumns));
+            // Red borders
+            document.documentElement.dataset.efytBorders = current.redBorders ? 'on' : 'off';
+            // Masthead margin
+            document.documentElement.style.setProperty('--efyt-masthead-margin', current.mastheadMargin);
+            // Fixed masthead toggle
+            document.documentElement.dataset.efytMasthead = current.fixedMasthead ? 'fixed' : 'default';
+            // Re-run grid update for dynamic elements
+            MainPage.updateGrid();
+        }
+
+        function createGearButton() {
+            // Try to insert the gear immediately
+            if (tryInsertGear()) return;
+
+            // If #end.ytd-masthead isn't ready yet, watch for it
+            if (Core.state._endObserver) Core.state._endObserver.disconnect();
+            Core.state._endObserver = new MutationObserver(() => {
+                if (tryInsertGear()) {
+                    Core.state._endObserver.disconnect();
+                }
+            });
+            Core.state._endObserver.observe(document.body, { childList: true, subtree: true });
+        }
+
+        function tryInsertGear() {
+            if (document.getElementById('efyt-gear-btn')) return true;
+
+            // Primary target: #buttons.ytd-masthead inside #end.ytd-masthead
+            let container = document.querySelector('#end.ytd-masthead #buttons.ytd-masthead, #buttons.ytd-masthead');
+            // Fallback: try to find #end first, then look for #buttons inside
+            if (!container) {
+                const end = document.querySelector('#end.ytd-masthead, [id="end"]');
+                if (end) {
+                    const buttons = end.querySelector('#buttons');
+                    if (buttons) container = buttons;
+                }
+            }
+            // Fallback: find the container that has notification/avatar buttons
+            if (!container) {
+                const notifBtn = document.querySelector('ytd-notification-topbar-button-renderer');
+                if (notifBtn && notifBtn.parentElement) {
+                    container = notifBtn.parentElement;
+                }
+            }
+            if (!container) {
+                const avatar = document.querySelector('yt-avatar-shape');
+                if (avatar) {
+                    const walk = (el) => {
+                        let parent = el.parentElement;
+                        while (parent && parent.children.length < 4) {
+                            parent = parent.parentElement;
+                        }
+                        return parent;
+                    };
+                    container = walk(avatar);
+                }
+            }
+            if (!container) return false;
+
+            gearEl = document.createElement('button');
+            gearEl.id = 'efyt-gear-btn';
+            // SVG gear icon built with DOM API to bypass Trusted Types CSP
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('width', '20');
+            svg.setAttribute('height', '20');
+            const path = document.createElementNS(svgNS, 'path');
+            path.setAttribute('d', 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z');
+            svg.appendChild(path);
+            gearEl.appendChild(svg);
+            gearEl.title = 'Enhancer Settings';
+            gearEl.setAttribute('aria-label', 'Enhancer Settings');
+
+            gearEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePanel();
+            });
+
+            // Insert as first child of #buttons (before notification bell)
+            if (container.firstChild) {
+                container.insertBefore(gearEl, container.firstChild);
+            } else {
+                container.appendChild(gearEl);
+            }
+
+            // Watch for YouTube re-rendering the masthead and removing our gear
+            if (!Core.state._endPersistenceObserver) {
+                Core.state._endPersistenceObserver = new MutationObserver((mutations) => {
+                    for (const m of mutations) {
+                        for (const removed of m.removedNodes) {
+                            if (removed.nodeType === 1) {
+                                if (removed.id === 'efyt-gear-btn' || (removed.querySelector && removed.querySelector('#efyt-gear-btn'))) {
+                                    setTimeout(tryInsertGear, 100);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            Core.state._endPersistenceObserver.observe(container, { childList: true });
+
+            buildPanel();
+            return true;
+        }
+
+        function buildPanel() {
+            if (panelEl) return;
+            panelEl = document.createElement('div');
+            panelEl.id = 'efyt-settings-panel';
+
+            const cols = current.gridColumns;
+            const bordersOn = current.redBorders;
+            const marginVal = current.mastheadMargin;
+            const fixedOn = current.fixedMasthead;
+
+            panelEl.innerHTML = TT.createHTML(`
+                <h3>Enhancer Settings</h3>
+                <div class="efyt-setting-row">
+                    <div>
+                        <div class="efyt-setting-label">Grid columns</div>
+                        <div class="efyt-setting-desc">Thumbnails per row on home page</div>
+                    </div>
+                    <select id="efyt-col-select" style="border-radius: 5px">
+                        <option value="2"${cols===2?' selected':''}>2</option>
+                        <option value="3"${cols===3?' selected':''}>3</option>
+                        <option value="4"${cols===4?' selected':''}>4</option>
+                        <option value="5"${cols===5?' selected':''}>5</option>
+                        <option value="6"${cols===6?' selected':''}>6</option>
+                        <option value="7"${cols===7?' selected':''}>7</option>
+                        <option value="8"${cols===8?' selected':''}>8</option>
+                    </select>
+                </div>
+                <div class="efyt-setting-row">
+                    <div>
+                        <div class="efyt-setting-label">Red dotted borders</div>
+                        <div class="efyt-setting-desc">Toggle debug borders on elements</div>
+                    </div>
+                    <div class="efyt-toggle-track${bordersOn?' efyt-on':''}" id="efyt-border-toggle">
+                        <div class="efyt-toggle-knob"></div>
+                    </div>
+                </div>
+                <div class="efyt-setting-row">
+                    <div>
+                        <div class="efyt-setting-label">Top Bar margin</div>
+                        <div class="efyt-setting-desc">Left/right margins for header ends (e.g. 0, 0 10%)</div>
+                    </div>
+                    <input type="text" id="efyt-margin-input" value="${marginVal}" style="width:90px;text-align:center;border-radius: 5px;">
+                </div>
+                <div class="efyt-setting-row">
+                    <div>
+                        <div class="efyt-setting-label">Auto-Hide Top Bar</div>
+                        <div class="efyt-setting-desc">Top Bar scrolls away, content fills top</div>
+                    </div>
+                    <div class="efyt-toggle-track${fixedOn?' efyt-on':''}" id="efyt-masthead-toggle">
+                        <div class="efyt-toggle-knob"></div>
+                    </div>
+                </div>
+                <button id="efyt-save-btn">Save</button>
+            `);
+
+            document.body.appendChild(panelEl);
+
+            // Wire up toggles
+            panelEl.querySelector('#efyt-border-toggle').addEventListener('click', function () {
+                this.classList.toggle('efyt-on');
+            });
+            panelEl.querySelector('#efyt-masthead-toggle').addEventListener('click', function () {
+                this.classList.toggle('efyt-on');
+            });
+
+            // Save button
+            panelEl.querySelector('#efyt-save-btn').addEventListener('click', () => {
+                const newCols = parseInt(panelEl.querySelector('#efyt-col-select').value, 10);
+                const newBorders = panelEl.querySelector('#efyt-border-toggle').classList.contains('efyt-on');
+                const newMargin = panelEl.querySelector('#efyt-margin-input').value.trim() || '0 10%';
+                const newFixed = panelEl.querySelector('#efyt-masthead-toggle').classList.contains('efyt-on');
+
+                save({
+                    gridColumns: newCols,
+                    redBorders: newBorders,
+                    mastheadMargin: newMargin,
+                    fixedMasthead: newFixed
+                });
+                apply();
+                panelEl.classList.remove('efyt-open');
+            });
+
+            // Click outside to close
+            document.addEventListener('click', (e) => {
+                if (panelEl.classList.contains('efyt-open') &&
+                    !panelEl.contains(e.target) &&
+                    e.target !== gearEl &&
+                    !gearEl.contains(e.target)) {
+                    panelEl.classList.remove('efyt-open');
+                }
+            });
+        }
+
+        function togglePanel() {
+            if (!panelEl) return;
+            panelEl.classList.toggle('efyt-open');
+        }
+
+        function updateScrollState(scrollY) {
+            if (!current.fixedMasthead) {
+                document.documentElement.removeAttribute('data-efyt-scrolled');
+                return;
+            }
+            document.documentElement.dataset.efytScrolled = scrollY > 10 ? 'true' : 'false';
+        }
+
+        return { load, save, apply, createGearButton, updateScrollState };
+    })();
+
     // MainPage
     const MainPage = (function () {
         const { utils } = Core;
 
         function updateGrid() {
-            utils.waitForElement(CONFIG.selectors.gridRenderer).then(grid => {
-                grid.style.setProperty('--ytd-rich-grid-items-per-row', '4', '!important');
-            }).catch(() => { });
+            const cols = Settings.load().gridColumns || 5;
+            // Apply to all existing grid containers
+            document.querySelectorAll('ytd-rich-grid-renderer, ytd-rich-section-renderer').forEach(el => {
+                el.style.setProperty('--ytd-rich-grid-items-per-row', String(cols), 'important');
+            });
+            // Watch for dynamically added grid containers
+            if (Core.state._gridObserver) return;
+            Core.state._gridObserver = new MutationObserver(() => {
+                document.querySelectorAll('ytd-rich-grid-renderer, ytd-rich-section-renderer').forEach(el => {
+                    if (!el.dataset.efytApplied) {
+                        el.dataset.efytApplied = 'true';
+                        el.style.setProperty('--ytd-rich-grid-items-per-row', String(cols), 'important');
+                    }
+                });
+            });
+            Core.state._gridObserver.observe(document.body, { childList: true, subtree: true });
         }
 
         return { updateGrid };
@@ -1358,7 +1541,6 @@
             relevantSelectors.forEach(selector => cache.delete(selector));
 
             if (utils.checkIfShortsPage()) {
-                console.log("Shorts Page Active");
                 Shorts.createShortsSkipBtn();
                 Shorts.skippingShortsMechanism();
                 Watch.cleanup();
@@ -1380,14 +1562,6 @@
     })();
 
     // Global Events
-    const throttledScroll = Core.utils.throttle((e) => {
-        Layout.updateMasthead();
-
-        if (Core.utils.checkIfWatchPage()) {
-            Watch.handleScroll(window.scrollY);
-        }
-    }, 60);
-
     const debouncedResize = Core.utils.debounce(() => {
         Layout.updateMasthead(Core.state.lastScrollY);
         Layout.updateWatchStyles();
@@ -1400,24 +1574,36 @@
         }
     }, 120);
 
-     window.addEventListener('scroll', Core.utils.debounce((e) => {
-        Layout.updateMasthead();
-        if (Core.utils.checkIfWatchPage()) {
-            Watch.handleScroll(window.scrollY);
+    /* Single scroll handler — rAF to avoid layout thrashing */
+    let scrollRafPending = false;
+    window.addEventListener('scroll', () => {
+        if (!scrollRafPending) {
+            scrollRafPending = true;
+            requestAnimationFrame(() => {
+                scrollRafPending = false;
+                Layout.updateMasthead();
+                Settings.updateScrollState(window.scrollY);
+                if (Core.utils.checkIfWatchPage()) {
+                    Watch.handleScroll(window.scrollY);
+                }
+            });
         }
-    }, 50));
+    });
     window.addEventListener('resize', debouncedResize);
     window.addEventListener('popstate', Navigation.handleChange);
-    document.addEventListener('keydown', (e) => Shorts.handleKeyEvent(e));
 
     // Init
+    Settings.load();
+    Settings.apply();
     Layout.initMastheadCache();
     MainPage.updateGrid();
 
+    // Mount gear button — uses MutationObserver internally, no need to wait
+    Settings.createGearButton();
+
     const titleObserver = new MutationObserver(Core.utils.debounce(() => {
         Navigation.handleChange();
-        console.log("URL Observed");
-    }, 30));
+    }, 100));
     const titleElement = document.querySelector('title');
     if (titleElement) {
         titleObserver.observe(titleElement, { childList: true });
